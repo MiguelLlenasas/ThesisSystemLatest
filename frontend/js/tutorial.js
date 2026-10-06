@@ -15,6 +15,61 @@ let confirmBeforeClose = false;
 let currentStep = 0;
 let tutorialLoaded = false;
 
+/* =========================================================
+   LANGUAGE HELPER & TRANSLATIONS
+   ========================================================= */
+function getCurrentLang() {
+    return localStorage.getItem("app_lang") || "en";
+}
+
+function getTranslations(lang = "en") {
+    if (lang === "tl") {
+        return {
+            nextBtn: "Susunod",
+            finishBtn: "Tapusin",
+            prevBtn: "Bumalik",
+            stayBtn: "Manatili",
+            skipBtn: "Laktawan"
+        };
+    }
+
+    return {
+        nextBtn: "Next",
+        finishBtn: "Finish",
+        prevBtn: "Previous",
+        stayBtn: "Stay",
+        skipBtn: "Skip"
+    };
+}
+
+function updateTutorialLanguage() {
+    const lang = getCurrentLang();
+    const t = getTranslations(lang);
+
+    // Update Confirm Dialog buttons
+    if (tutorialStay) tutorialStay.textContent = t.stayBtn;
+    if (tutorialSkip) tutorialSkip.textContent = t.skipBtn;
+
+    // Update steps text if attributes exist
+    tutorialSteps.forEach(step => {
+        const translatableElements = step.querySelectorAll("[data-lang-en]");
+        translatableElements.forEach(elem => {
+            const translatedText = elem.getAttribute(`data-lang-${lang}`);
+            if (translatedText) {
+                elem.textContent = translatedText;
+            }
+        });
+    });
+
+    // Re-trigger button text updates
+    if (tutorialNext) {
+        tutorialNext.textContent =
+            currentStep === tutorialSteps.length - 1
+                ? t.finishBtn
+                : t.nextBtn;
+    }
+}
+
 
 async function loadTutorial() {
 
@@ -233,6 +288,9 @@ function initializeTutorial() {
 
 function updateTutorial() {
 
+    const lang = getCurrentLang();
+    const t = getTranslations(lang);
+
     tutorialSteps.forEach(
         (step, index) => {
 
@@ -275,8 +333,8 @@ function updateTutorial() {
         tutorialNext.textContent =
             currentStep ===
             tutorialSteps.length - 1
-                ? "Finish"
-                : "Next";
+                ? t.finishBtn
+                : t.nextBtn;
 
     }
 
@@ -353,6 +411,9 @@ function updateTutorial() {
         );
 
     }
+
+    // Siguraduhing na-a-apply ang tamang wika
+    updateTutorialLanguage();
 
 }
 
@@ -511,6 +572,10 @@ document.addEventListener(
     }
 );
 
+// Pakinggan ang pagbabago ng wika mula sa language selector/toggle
+window.addEventListener("languageChanged", () => {
+    updateTutorialLanguage();
+});
 
 window.Tutorial = {
 

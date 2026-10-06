@@ -1,5 +1,13 @@
 console.log("Classification JS Connected");
 
+/* =========================================================
+   LANGUAGE HELPER
+   ========================================================= */
+
+function getCurrentLang() {
+    return localStorage.getItem("app_lang") || "en";
+}
+
 
 /* =========================================================
    CLASSIFICATION UPDATE
@@ -17,6 +25,8 @@ function updateClassification(data) {
    ========================================================= */
 
 function renderClassification(data) {
+    const lang = getCurrentLang();
+
     const vulnerability =
         document.getElementById("VulnerabilityFound");
 
@@ -48,7 +58,7 @@ function renderClassification(data) {
         }
 
         risk.textContent =
-            getRiskLevel(data);
+            getRiskLevel(data, lang);
     }
 
     if (score) {
@@ -58,15 +68,16 @@ function renderClassification(data) {
 
     if (summary) {
         summary.innerHTML = `
-            <p>${getClassificationSummary(data)}</p>
-            ${getRiskExplanationHTML(data)}
+            <p>${getClassificationSummary(data, lang)}</p>
+            ${getRiskExplanationHTML(data, lang)}
         `;
     }
 
     if (message) {
         if (localStorage.getItem("comparisonPassword")) {
-            message.textContent =
-                "Password comparison results show key similarities, differences, and security risks.";
+            message.textContent = lang === "tl"
+                ? "Ipinapakita ng resulta ng paghahambing ng password ang mga pangunahing pagkakatulad, pagkakaiba, at mga panganib sa seguridad."
+                : "Password comparison results show key similarities, differences, and security risks.";
 
             message.style.display = "block";
         } else {
@@ -75,6 +86,7 @@ function renderClassification(data) {
     }
 
     resetPasswordDisplay();
+    updateInfoCards(data);
 }
 
 
@@ -120,9 +132,11 @@ function getRiskClass(data) {
    CLASSIFICATION SUMMARY
    ========================================================= */
 
-function getClassificationSummary(data) {
+function getClassificationSummary(data, lang = "en") {
     if (!data) {
-        return "No explanation available.";
+        return lang === "tl" 
+            ? "Walang available na paliwanag." 
+            : "No explanation available.";
     }
 
     const classificationExplanation =
@@ -131,7 +145,7 @@ function getClassificationSummary(data) {
     return (
         classificationExplanation.classification_rationale ||
         data.security_assessment?.vulnerability_explanation ||
-        "No explanation available."
+        (lang === "tl" ? "Walang available na paliwanag." : "No explanation available.")
     );
 }
 
@@ -156,9 +170,9 @@ function getSecurityScore(data) {
    RISK LEVEL
    ========================================================= */
 
-function getRiskLevel(data) {
+function getRiskLevel(data, lang = "en") {
     if (!data) {
-        return "UNKNOWN";
+        return lang === "tl" ? "HINDI KILALA" : "UNKNOWN";
     }
 
     const risk =
@@ -166,15 +180,23 @@ function getRiskLevel(data) {
         data.risk_assessment?.risk_level ||
         "UNKNOWN";
 
-    if (
-        String(risk)
-            .trim()
-            .toUpperCase() === "UNKNOWN"
-    ) {
-        return "UNKNOWN";
+    const normalizedRisk = String(risk).trim().toUpperCase();
+
+    if (normalizedRisk === "UNKNOWN") {
+        return lang === "tl" ? "HINDI KILALA" : "UNKNOWN";
     }
 
-    return `${String(risk).trim().toUpperCase()} RISK`;
+    if (lang === "tl") {
+        const riskTranslations = {
+            "CRITICAL": "KRITIKAL NA PANGANIB",
+            "HIGH": "MATAAS NA PANGANIB",
+            "MODERATE": "KATAMTAMANG PANGANIB",
+            "MEDIUM": "KATAMTAMANG PANGANIB"
+        };
+        return riskTranslations[normalizedRisk] || `${normalizedRisk} NA PANGANIB`;
+    }
+
+    return `${normalizedRisk} RISK`;
 }
 
 
@@ -182,7 +204,7 @@ function getRiskLevel(data) {
    RISK EXPLANATION
    ========================================================= */
 
-function getRiskExplanationHTML(data) {
+function getRiskExplanationHTML(data, lang = "en") {
     const riskAssessment =
         data?.risk_assessment;
 
@@ -193,10 +215,14 @@ function getRiskExplanationHTML(data) {
         return "";
     }
 
+    const labelText = lang === "tl" 
+        ? "Bakit ganito ang antas ng panganib?" 
+        : "Why this risk level?";
+
     return `
         <div class="risk-explanation">
             <p class="risk-explanation-label">
-                <strong>Why this risk level?</strong>
+                <strong>${labelText}</strong>
             </p>
 
             <p>
@@ -211,7 +237,7 @@ function getRiskExplanationHTML(data) {
    VULNERABILITY INFO
    ========================================================= */
 
-function getVulnerabilityInfo(vulnerability) {
+function getVulnerabilityInfo(vulnerability, lang = "en") {
 
     const normalized =
         String(vulnerability || "")
@@ -220,21 +246,30 @@ function getVulnerabilityInfo(vulnerability) {
             .replace(/[\s-]+/g, "_");
 
     const explanations = {
-
-        brute_force:
-            "An attack that systematically tries many possible character combinations until the correct password is found.",
-
-        dictionary:
-            "An attack that tries passwords from a predefined list of common words, passwords, and phrases.",
-
-        rule_based:
-            "An attack that applies common password patterns and modifications to dictionary words or known passwords."
+        en: {
+            brute_force:
+                "An attack that systematically tries many possible character combinations until the correct password is found.",
+            dictionary:
+                "An attack that tries passwords from a predefined list of common words, passwords, and phrases.",
+            rule_based:
+                "An attack that applies common password patterns and modifications to dictionary words or known passwords.",
+            default:
+                "The detected vulnerability describes the type of password-cracking technique most associated with this password."
+        },
+        tl: {
+            brute_force:
+                "Isang pag-atake na sistematikong sinusubukan ang lahat ng posibleng kombinasyon ng karakter hanggang sa mahanap ang tamang password.",
+            dictionary:
+                "Isang pag-atake na sinusubukan ang mga password mula sa isang nakahandang listahan ng mga karaniwang salita at parirala.",
+            rule_based:
+                "Isang pag-atake na naglalapat ng mga karaniwang pattern at pagbabago (tulad ng leetspeak o numero) sa mga salitang diksyonaryo.",
+            default:
+                "Inilalarawan ng natukoy na kahinaan ang uri ng pamamaraan sa pag-crack ng password na karaniwang nauugnay dito."
+        }
     };
 
-    return (
-        explanations[normalized] ||
-        "The detected vulnerability describes the type of password-cracking technique most associated with this password."
-    );
+    const langDict = explanations[lang] || explanations["en"];
+    return langDict[normalized] || langDict["default"];
 }
 
 
@@ -242,7 +277,7 @@ function getVulnerabilityInfo(vulnerability) {
    RISK INFO
    ========================================================= */
 
-function getRiskInfo(risk) {
+function getRiskInfo(risk, lang = "en") {
 
     const normalized =
         String(risk || "")
@@ -250,24 +285,34 @@ function getRiskInfo(risk) {
             .toLowerCase();
 
     const explanations = {
-
-        moderate:
-            "The password has some weaknesses that could make it vulnerable to common cracking techniques.",
-
-        medium:
-            "The password has some weaknesses that could make it vulnerable to common cracking techniques.",
-
-        high:
-            "The password has significant weaknesses that make it more susceptible to password-cracking attacks.",
-
-        critical:
-            "The password has severe weaknesses and may be quickly compromised using common cracking techniques."
+        en: {
+            moderate:
+                "The password has some weaknesses that could make it vulnerable to common cracking techniques.",
+            medium:
+                "The password has some weaknesses that could make it vulnerable to common cracking techniques.",
+            high:
+                "The password has significant weaknesses that make it more susceptible to password-cracking attacks.",
+            critical:
+                "The password has severe weaknesses and may be quickly compromised using common cracking techniques.",
+            default:
+                "The risk level indicates how vulnerable the password may be to password-cracking techniques."
+        },
+        tl: {
+            moderate:
+                "Ang password ay may ilang kahinaan na maaaring maglagay dito sa panganib mula sa mga karaniwang pamamaraan ng pag-crack.",
+            medium:
+                "Ang password ay may ilang kahinaan na maaaring maglagay dito sa panganib mula sa mga karaniwang pamamaraan ng pag-crack.",
+            high:
+                "Ang password ay may malaking kahinaan na nagpapataas sa posibilidad na ito ay mahulaan o ma-crack.",
+            critical:
+                "Ang password ay may malalang kahinaan at madaling makuha gamit ang mga karaniwang tool sa pag-crack.",
+            default:
+                "Ipinapakita ng antas ng panganib kung gaano kabukas ang password sa mga banta ng pag-crack."
+        }
     };
 
-    return (
-        explanations[normalized] ||
-        "The risk level indicates how vulnerable the password may be to password-cracking techniques."
-    );
+    const langDict = explanations[lang] || explanations["en"];
+    return langDict[normalized] || langDict["default"];
 }
 
 
@@ -276,6 +321,7 @@ function getRiskInfo(risk) {
    ========================================================= */
 
 function updateInfoCards(data) {
+    const lang = getCurrentLang();
 
     const vulnerability =
         data?.vulnerability || "";
@@ -297,12 +343,12 @@ function updateInfoCards(data) {
 
     if (vulnerabilityText) {
         vulnerabilityText.textContent =
-            getVulnerabilityInfo(vulnerability);
+            getVulnerabilityInfo(vulnerability, lang);
     }
 
     if (riskText) {
         riskText.textContent =
-            getRiskInfo(risk);
+            getRiskInfo(risk, lang);
     }
 }
 
@@ -451,6 +497,8 @@ function getTestedPassword() {
    ========================================================= */
 
 function resetPasswordDisplay() {
+    const lang = getCurrentLang();
+
     const passwordBox =
         document.getElementById("testedPassword");
 
@@ -464,17 +512,19 @@ function resetPasswordDisplay() {
     const password =
         getTestedPassword();
 
+    const labelShow = lang === "tl" ? "Ipakita ang password" : "Show password";
+
     passwordBox.classList.remove("revealed");
     passwordToggle.classList.remove("active");
 
     passwordToggle.setAttribute(
         "aria-label",
-        "Show password"
+        labelShow
     );
 
     passwordToggle.setAttribute(
         "title",
-        "Show password"
+        labelShow
     );
 
     if (!password) {
@@ -492,6 +542,8 @@ function resetPasswordDisplay() {
    ========================================================= */
 
 function showTestedPassword() {
+    const lang = getCurrentLang();
+
     const passwordBox =
         document.getElementById("testedPassword");
 
@@ -508,6 +560,8 @@ function showTestedPassword() {
     if (!password) {
         return;
     }
+
+    const labelHide = lang === "tl" ? "Itago ang password" : "Hide password";
 
     passwordBox.textContent =
         password;
@@ -518,12 +572,12 @@ function showTestedPassword() {
 
     passwordToggle.setAttribute(
         "aria-label",
-        "Hide password"
+        labelHide
     );
 
     passwordToggle.setAttribute(
         "title",
-        "Hide password"
+        labelHide
     );
 }
 
@@ -533,6 +587,8 @@ function showTestedPassword() {
    ========================================================= */
 
 function hideTestedPassword() {
+    const lang = getCurrentLang();
+
     const passwordBox =
         document.getElementById("testedPassword");
 
@@ -550,6 +606,8 @@ function hideTestedPassword() {
         return;
     }
 
+    const labelShow = lang === "tl" ? "Ipakita ang password" : "Show password";
+
     passwordBox.textContent =
         "*".repeat(password.length);
 
@@ -559,28 +617,18 @@ function hideTestedPassword() {
 
     passwordToggle.setAttribute(
         "aria-label",
-        "Show password"
+        labelShow
     );
 
     passwordToggle.setAttribute(
         "title",
-        "Show password"
+        labelShow
     );
 }
 
 
 /* =========================================================
    CLICK HANDLER
-   =========================================================
-
-   Handles:
-
-   1. Info card X button
-   2. Vulnerability ?
-   3. Risk ?
-   4. Click outside info card
-   5. Password box
-   6. Eye button
    ========================================================= */
 
 document.addEventListener(
@@ -693,9 +741,6 @@ document.addEventListener(
                 "#passwordToggle"
             );
 
-        /*
-         * Ignore clicks outside both elements.
-         */
         if (
             !passwordBox &&
             !passwordToggle
@@ -712,10 +757,6 @@ document.addEventListener(
             return;
         }
 
-        /*
-         * The active class is the single
-         * source of truth for the state.
-         */
         const isRevealed =
             toggle.classList.contains("active");
 
@@ -741,4 +782,3 @@ document.addEventListener(
         closeInfoCards();
     }
 );
-

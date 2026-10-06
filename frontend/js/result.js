@@ -1,4 +1,111 @@
 fetch("https://thesissystemlatest.onrender.com/analyze", { method: "HEAD" }).catch(() => {});
+
+/* =========================================================
+   LANGUAGE HELPER & TRANSLATIONS
+   ========================================================= */
+function getCurrentLang() {
+    return localStorage.getItem("app_lang") || "en";
+}
+
+function getTranslations(lang = "en") {
+    if (lang === "tl") {
+        return {
+            summaryTab: "Pangkalahatang-ideya",
+            decisionTreeTab: "Decision Tree",
+            recommendationTab: "Mgra Rekomendasyon",
+            featureVectorTab: "Feature Vector",
+            comparisonTab: "Paghahambing",
+            tutorialBtn: "Tutorial",
+            resetBtn: "Subukan ang Ibang Password",
+            compareBtn: "Ipaghambing ang Password",
+            testedPasswordLabel: "Sinubukang Password:",
+            previousPasswordLabel: "Naunang Password:"
+        };
+    }
+
+    return {
+        summaryTab: "Summary",
+        decisionTreeTab: "Decision Tree",
+        recommendationTab: "Recommendations",
+        featureVectorTab: "Feature Vector",
+        comparisonTab: "Comparison",
+        tutorialBtn: "Tutorial",
+        resetBtn: "Test Another Password",
+        compareBtn: "Compare Password",
+        testedPasswordLabel: "Tested Password:",
+        previousPasswordLabel: "Previous Password:"
+    };
+}
+
+function updateResultPageLanguage() {
+    const lang = getCurrentLang();
+    const t = getTranslations(lang);
+
+    // Update Sidebar Navigation Tabs Text
+    const tabMap = {
+        0: t.summaryTab,
+        1: t.decisionTreeTab,
+        2: t.recommendationTab,
+        3: t.featureVectorTab,
+        4: t.comparisonTab
+    };
+
+    const tabs = document.querySelectorAll(".sidebar-item[data-section]");
+    tabs.forEach(tab => {
+        const secIndex = tab.dataset.section;
+        const textSpan = tab.querySelector(".sidebar-text") || tab;
+        if (tabMap[secIndex] && textSpan) {
+            // Kung may nakahiwalay na text node o span
+            if (tab.querySelector(".sidebar-text")) {
+                tab.querySelector(".sidebar-text").textContent = tabMap[secIndex];
+            } else {
+                // Panatilihin ang icon kung mayroon man
+                const icon = tab.querySelector("i, svg");
+                if (icon) {
+                    tab.innerHTML = "";
+                    tab.appendChild(icon);
+                    tab.appendChild(document.createTextNode(" " + tabMap[secIndex]));
+                } else {
+                    tab.textContent = tabMap[secIndex];
+                }
+            }
+        }
+    });
+
+    // Update Buttons Text
+    const tutorialBtn = document.getElementById("tutorialButton");
+    if (tutorialBtn) {
+        const btnText = tutorialBtn.querySelector(".btn-text");
+        if (btnText) btnText.textContent = t.tutorialBtn;
+    }
+
+    const resetBtn = document.getElementById("resetButton");
+    if (resetBtn) {
+        const btnText = resetBtn.querySelector(".btn-text");
+        if (btnText) btnText.textContent = t.resetBtn;
+        else resetBtn.textContent = t.resetBtn;
+    }
+
+    const compareBtn = document.getElementById("compareButton");
+    if (compareBtn) {
+        const btnText = compareBtn.querySelector(".btn-text");
+        if (btnText) btnText.textContent = t.compareBtn;
+        else compareBtn.textContent = t.compareBtn;
+    }
+
+    // Update Password Preview Labels
+    const testedLabel = document.getElementById("testedPasswordLabel");
+    if (testedLabel) testedLabel.textContent = t.testedPasswordLabel;
+
+    const previousLabel = document.getElementById("previousPasswordLabel");
+    if (previousLabel) previousLabel.textContent = t.previousPasswordLabel;
+
+    // Re-render backend components to reflect language change if data is loaded
+    if (window.latestAnalysisData) {
+        renderBackendData(window.latestAnalysisData);
+    }
+}
+
 async function analyzePassword(password, previousPassword) {
 
     const response =
@@ -641,8 +748,6 @@ function initializePasswordPreview() {
             "previousPassword"
         ) || "";
 
-    // FIXED: Stripped the OR chain. fetchAnalysisResult() strictly updates 
-    // "analyzedPassword" to be the final inputted password. No more stale data.
     const testedPassword =
         localStorage.getItem(
             "analyzedPassword"
@@ -803,6 +908,9 @@ async function initializeResultPage() {
     initializePasswordPreview();
 
     initializeActionButtons();
+
+    // Initial language apply
+    updateResultPageLanguage();
 }
 
 document.addEventListener(
@@ -813,12 +921,15 @@ document.addEventListener(
     }
 );
 
+// Pakinggan ang pagbabago ng wika mula sa language selector/toggle
+window.addEventListener("languageChanged", () => {
+    updateResultPageLanguage();
+});
+
 window.addEventListener("pageshow", (event) => {
-    // 1. Kuhanin ang navigation entry gamit ang modern PerformanceObserver API
     const entries = performance.getEntriesByType("navigation");
     const isBackForward = entries.length > 0 && entries[0].type === "back_forward";
 
-    // 2. I-check kung galing sa bfcache (event.persisted) o kaya naman ay back/forward button
     if (event.persisted || isBackForward) {
         document.documentElement.style.display = "none";
         window.location.replace("initialTest.html");

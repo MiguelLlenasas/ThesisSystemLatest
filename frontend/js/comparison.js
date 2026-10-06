@@ -1,4 +1,13 @@
+fetch("https://thesissystemlatest.onrender.com/analyze", { method: "HEAD" }).catch(() => {});
 console.log("Comparison JS Connected");
+
+/* =========================================================
+   LANGUAGE HELPER
+   ========================================================= */
+
+function getCurrentLang() {
+    return localStorage.getItem("app_lang") || "en";
+}
 
 function getComparisonElements() {
     return {
@@ -184,9 +193,9 @@ function getComparisonRisk(data) {
     );
 }
 
-function getComparisonExplanation(data) {
+function getComparisonExplanation(data, lang = "en") {
     if (!data) {
-        return "No explanation available.";
+        return lang === "tl" ? "Walang available na paliwanag." : "No explanation available.";
     }
 
     return (
@@ -195,11 +204,13 @@ function getComparisonExplanation(data) {
         data.security_assessment?.vulnerability_explanation ||
         data.security_assessment?.explanation ||
         data.classification?.explanation ||
-        "No explanation available."
+        (lang === "tl" ? "Walang available na paliwanag." : "No explanation available.")
     );
 }
 
 function updateCurrentComparison(data) {
+    const lang = getCurrentLang();
+
     const {
         currentVulnerability,
         currentRisk,
@@ -225,19 +236,21 @@ function updateCurrentComparison(data) {
         }
 
         currentRisk.textContent =
-            formatComparisonRisk(getComparisonRisk(data));
+            formatComparisonRisk(getComparisonRisk(data), lang);
     }
 
     if (currentExplanation) {
         currentExplanation.innerHTML = `
             <p>${escapeComparisonHTML(
-                getComparisonExplanation(data)
+                getComparisonExplanation(data, lang)
             )}</p>
         `;
     }
 }
 
 function updatePreviousComparison(data) {
+    const lang = getCurrentLang();
+
     const {
         previousVulnerability,
         previousRisk,
@@ -263,13 +276,13 @@ function updatePreviousComparison(data) {
         }
 
         previousRisk.textContent =
-            formatComparisonRisk(getComparisonRisk(data));
+            formatComparisonRisk(getComparisonRisk(data), lang);
     }
 
     if (previousExplanation) {
         previousExplanation.innerHTML = `
             <p>${escapeComparisonHTML(
-                getComparisonExplanation(data)
+                getComparisonExplanation(data, lang)
             )}</p>
         `;
     }
@@ -303,9 +316,8 @@ function updateComparisonClassification(
 }
 
 function updateComparisonSummary(comparison) {
-    const {
-        summaryText
-    } = getComparisonElements();
+    const lang = getCurrentLang();
+    const { summaryText } = getComparisonElements();
 
     if (!summaryText) {
         return;
@@ -314,25 +326,30 @@ function updateComparisonSummary(comparison) {
     const status =
         String(comparison?.status || "").trim().toUpperCase();
 
-    let summary =
-        "The current password has been compared with the previous password to evaluate their security characteristics.";
+    let summary = lang === "tl"
+        ? "Ipinaghambing ang kasalukuyang password sa nakaraang password upang suriin ang pangkalahatang katangian ng seguridad ng mga ito."
+        : "The current password has been compared with the previous password to evaluate their security characteristics.";
 
     if (status === "CURRENT_PREFERRED") {
-        summary =
-            "Your current password is favorable than your previous password based on its overall security characteristics.";
+        summary = lang === "tl"
+            ? "Mas mainam ang iyong kasalukuyang password kaysa sa nakaraang password batay sa pangkalahatang katangian ng seguridad nito."
+            : "Your current password is favorable than your previous password based on its overall security characteristics.";
     } else if (status === "PREVIOUS_PREFERRED") {
-        summary =
-            "Your previous password is favorable than your current password based on its overall security characteristics.";
+        summary = lang === "tl"
+            ? "Mas mainam ang iyong nakaraang password kaysa sa kasalukuyang password batay sa pangkalahatang katangian ng seguridad nito."
+            : "Your previous password is favorable than your current password based on its overall security characteristics.";
     } else if (status === "IDENTICAL") {
-        summary =
-            "Your current password is identical to your previous password and provides the same security characteristics.";
+        summary = lang === "tl"
+            ? "Ang kasalukuyang password ay kaparehong-kapareho ng nakaraang password at nagbibigay ng parehong katangian ng seguridad."
+            : "Your current password is identical to your previous password and provides the same security characteristics.";
     } else if (
         status === "SIMILAR" ||
         status === "SIMILARITY" ||
         status === "SIMILAR_PASSWORD"
     ) {
-        summary =
-            "Your current and previous passwords have similar security characteristics.";
+        summary = lang === "tl"
+            ? "Ang kasalukuyan at nakaraang password ay may magkaparehong katangian ng seguridad."
+            : "Your current and previous passwords have similar security characteristics.";
     }
 
     summaryText.textContent = summary;
@@ -353,7 +370,7 @@ async function loadComparisonFromBackend() {
 
     try {
         const response = await fetch(
-            "http://localhost:3000/analyze",
+            "http://thesissystemlatest.onrender.com/analyze",
             {
                 method: "POST",
                 headers: {
@@ -384,7 +401,7 @@ async function loadComparisonFromBackend() {
 
         if (!previousData) {
             const previousResponse = await fetch(
-                "http://localhost:3000/analyze",
+                "http://thesissystemlatest.onrender.com/analyze",
                 {
                     method: "POST",
                     headers: {
@@ -417,6 +434,7 @@ async function loadComparisonFromBackend() {
 }
 
 function updateComparisonStatus(comparison) {
+    const lang = getCurrentLang();
     const { status } = getComparisonElements();
 
     if (!status || !comparison) {
@@ -426,38 +444,55 @@ function updateComparisonStatus(comparison) {
     const comparisonStatus = String(comparison.status || "").toUpperCase();
 
     if (comparisonStatus === "IDENTICAL") {
-        status.textContent =
-            "Your current password is identical to your previous password, so both passwords have the same security characteristics.";
+        status.textContent = lang === "tl"
+            ? "Ang kasalukuyang password ay kaparehong-kapareho ng nakaraang password, kaya pareho sila ng katangian ng seguridad."
+            : "Your current password is identical to your previous password, so both passwords have the same security characteristics.";
         return;
     }
 
     if (comparisonStatus === "CURRENT_PREFERRED") {
-        status.textContent =
-            "Your current password has favorable security characteristics than your previous password.";
+        status.textContent = lang === "tl"
+            ? "Ang kasalukuyang password ay may mas magandang katangian ng seguridad kaysa sa nakaraang password."
+            : "Your current password has favorable security characteristics than your previous password.";
         return;
     }
 
     if (comparisonStatus === "PREVIOUS_PREFERRED") {
-        status.textContent =
-            "Your previous password has faborable security characteristics than your current password.";
+        status.textContent = lang === "tl"
+            ? "Ang nakaraang password ay may mas magandang katangian ng seguridad kaysa sa kasalukuyang password."
+            : "Your previous password has favorable security characteristics than your current password.";
         return;
     }
 
     if (comparisonStatus === "SIMILAR") {
-        status.textContent =
-            "Your current and previous passwords have similar security characteristics.";
+        status.textContent = lang === "tl"
+            ? "Ang kasalukuyan at nakaraang password ay may magkaparehong katangian ng seguridad."
+            : "Your current and previous passwords have similar security characteristics.";
         return;
     }
 
-    status.textContent = comparison.message || "Comparison completed.";
+    status.textContent = comparison.message || (lang === "tl" ? "Tapos na ang paghahambing." : "Comparison completed.");
 }
 
-function formatComparisonRisk(risk) {
+function formatComparisonRisk(risk, lang = "en") {
     if (!risk) {
-        return "UNKNOWN RISK";
+        return lang === "tl" ? "HINDI KILALANG PANGANIB" : "UNKNOWN RISK";
     }
 
     const normalized = String(risk).trim().toUpperCase();
+
+    if (lang === "tl") {
+        const riskTranslations = {
+            "CRITICAL": "KRITIKAL NA PANGANIB",
+            "HIGH": "MATAAS NA PANGANIB",
+            "MODERATE": "KATAMTAMANG PANGANIB",
+            "MEDIUM": "KATAMTAMANG PANGANIB",
+            "LOW": "MABABANG PANGANIB"
+        };
+
+        const cleanRisk = normalized.replace("RISK", "").trim();
+        return riskTranslations[cleanRisk] || `${cleanRisk} NA PANGANIB`;
+    }
 
     if (normalized.includes("RISK")) {
         return normalized;

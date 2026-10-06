@@ -45,7 +45,7 @@
         <!-- VISIBLE INTERACTION NOTE -->
         <div class="decision-tree-click-note">
             <span class="decision-tree-click-icon">◉</span>
-            <span>Click the tree to explore its decision path</span>
+            <span data-lang-en="Click the tree to explore its decision path" data-lang-tl="I-click ang puno upang galugarin ang decision path nito">Click the tree to explore its decision path</span>
         </div>
 
     </div>
@@ -59,8 +59,8 @@
             <div class="decision-assessment-header">
                 <span class="decision-assessment-icon">◈</span>
                 <div>
-                    <h3>Security Assessment</h3>
-                    <p>How the password was classified</p>
+                    <h3 data-lang-en="Security Assessment" data-lang-tl="Pagsusuri ng Sekuridad">Security Assessment</h3>
+                    <p data-lang-en="How the password was classified" data-lang-tl="Kung paano uriin ang password">How the password was classified</p>
                 </div>
             </div>
 
@@ -70,10 +70,12 @@
 
                 <div class="decision-info-title">
                     <span>◈</span>
-                    <h4>Vulnerability Analysis</h4>
+                    <h4 data-lang-en="Vulnerability Analysis" data-lang-tl="Pagsusuri ng Vulnerability">Vulnerability Analysis</h4>
                 </div>
 
-                <p id="decisionExplanation">
+                <p id="decisionExplanation"
+                   data-lang-en="The explanation of the Decision Tree traversal will appear here after the password has been classified."
+                   data-lang-tl="Lalabas dito ang paliwanag ng Decision Tree traversal pagkatapos suriin ang password.">
                     The explanation of the Decision Tree traversal will appear here after the password has been
                     classified.
                 </p>
@@ -85,10 +87,12 @@
 
                 <div class="decision-info-title">
                     <span>◈</span>
-                    <h4>Vulnerability Characteristics</h4>
+                    <h4 data-lang-en="Vulnerability Characteristics" data-lang-tl="Mga Katangian ng Vulnerability">Vulnerability Characteristics</h4>
                 </div>
 
-                <p id="attackVector">
+                <p id="attackVector"
+                   data-lang-en="The identified attack strategy will appear here."
+                   data-lang-tl="Lalabas dito ang natukoy na estratehiya ng pag-atake.">
                     The identified attack strategy will appear here.
                 </p>
             </div>
@@ -98,10 +102,12 @@
 
                 <div class="decision-info-title">
                     <span>◈</span>
-                    <h4>Structural Insights</h4>
+                    <h4 data-lang-en="Structural Insights" data-lang-tl="Istruktural na Pagsusuri">Structural Insights</h4>
                 </div>
 
-                <p id="structuralInsights">
+                <p id="structuralInsights"
+                   data-lang-en="Detailed structural breakdown will appear here."
+                   data-lang-tl="Lalabas dito ang detalyadong paghihimay sa istruktura ng password.">
                     Detailed structural breakdown will appear here.
                 </p>
 
@@ -112,3 +118,18 @@
     </div>
 
 </div>
+
+<script>
+    /* =========================================================
+       LANGUAGE HELPER FOR DECISIONTREE.HTML COMPONENTS
+       ========================================================= */
+    (function updateDecisionTreeLanguage() {
+        const lang = localStorage.getItem("app_lang") || "en";
+        document.querySelectorAll("#decisionTreeSection [data-lang-en]").forEach(elem => {
+            const text = elem.getAttribute(`data-lang-${lang}`);
+            if (text) {
+                elem.textContent = text;
+            }
+        });
+    })();
+</script>

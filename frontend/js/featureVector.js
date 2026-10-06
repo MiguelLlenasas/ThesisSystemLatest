@@ -3,6 +3,27 @@
 const FeatureVector = (() => {
 
     // =========================================================
+    // LANGUAGE HELPER & TRANSLATIONS
+    // =========================================================
+    function getCurrentLang() {
+        return localStorage.getItem("app_lang") || "en";
+    }
+
+    function getTranslations(lang = "en") {
+        if (lang === "tl") {
+            return {
+                present: "Mayroon",
+                notPresent: "Wala"
+            };
+        }
+
+        return {
+            present: "Present",
+            notPresent: "Not Present"
+        };
+    }
+
+    // =========================================================
     // UPDATE FEATURE VECTOR UI FROM DATA
     // =========================================================
 
@@ -128,17 +149,19 @@ const FeatureVector = (() => {
 
 
     // =========================================================
-    // BOOLEAN FORMAT
+    // BOOLEAN FORMAT WITH LOCALIZATION
     // =========================================================
 
     function convert(value) {
+        const lang = getCurrentLang();
+        const t = getTranslations(lang);
 
         return (
             value === 1 ||
             value === true
         )
-            ? "Present"
-            : "Not Present";
+            ? t.present
+            : t.notPresent;
     }
 
 

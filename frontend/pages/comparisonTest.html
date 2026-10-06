@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../assets/images/logo.png">
-    <title>Password Vulnerability Comparison Test</title>
+    <title data-lang-en="Password Vulnerability Comparison Test" data-lang-tl="Paghahambing ng Vulnerability ng Password">Password Vulnerability Comparison Test</title>
     <link rel="stylesheet" href="../css/comparisonTest.css">
 </head>
 
@@ -23,11 +23,11 @@
                     <img src="../assets/images/logo.png">
                 </div>
 
-                <h1>
+                <h1 data-lang-en="Password Vulnerability Classification System" data-lang-tl="Password Vulnerability Classification System">
                     Password Vulnerability Classification System
                 </h1>
 
-                <h2>
+                <h2 data-lang-en="Comparison Mode" data-lang-tl="Mode ng Paghahambing">
                     Comparison Mode
                 </h2>
 
@@ -40,7 +40,7 @@
 
                     <div class="input-header">
 
-                        <label>
+                        <label id="inputLabel" data-lang-en="Enter New Password" data-lang-tl="Ipasok ang Bagong Password">
                             Enter New Password
                         </label>
 
@@ -61,6 +61,8 @@
                             id="comparePasswordInput"
                             type="password"
                             placeholder="Enter password for comparison..."
+                            data-placeholder-en="Enter password for comparison..."
+                            data-placeholder-tl="Ipasok ang password para sa paghahambing..."
                         >
 
                         <button
@@ -135,6 +137,8 @@
                         id="resetButton"
                         class="reset-btn"
                         type="button"
+                        data-lang-en="RESET"
+                        data-lang-tl="I-RESET"
                     >
                         RESET
                     </button>
@@ -143,6 +147,8 @@
                         id="compareButton"
                         class="compare-btn"
                         type="button"
+                        data-lang-en="COMPARE PASSWORD"
+                        data-lang-tl="IPAGHAMBING ANG PASSWORD"
                     >
                         COMPARE PASSWORD
                     </button>
@@ -158,11 +164,12 @@
 
                     <div class="language-notice-content">
 
-                        <strong>
+                        <strong data-lang-en="Language Limitation" data-lang-tl="Limitasyon sa Wika">
                             Language Limitation
                         </strong>
 
-                        <p>
+                        <p data-lang-en="The system detects password-related words and patterns based on English and Tagalog dictionaries. Passwords containing words or patterns outside these supported languages may not be fully identified or classified accurately."
+                           data-lang-tl="Natutukoy ng sistema ang mga salita at pattern na nauugnay sa password batay sa mga diksyonaryo ng Ingles at Tagalog. Ang mga password na naglalaman ng mga salita o pattern sa labas ng mga suportadong wikang ito ay maaaring hindi ganap na makilala o maiuri nang tumpak.">
                             The system detects password-related words
                             and patterns based on English and Tagalog
                             dictionaries. Passwords containing words
@@ -187,11 +194,11 @@
             id="buttonInfo"
         >
 
-            <h3 id="buttonInfoTitle">
+            <h3 id="buttonInfoTitle" data-lang-en="Button Information" data-lang-tl="Impormasyon sa Button">
                 Button Information
             </h3>
 
-            <p id="buttonInfoText">
+            <p id="buttonInfoText" data-lang-en="Hover over a button to see its function." data-lang-tl="I-hover ang cursor sa button upang makita ang gamit nito.">
                 Hover over a button to see its function.
             </p>
 
@@ -205,6 +212,8 @@
             <button
                 class="info-option active"
                 data-section="about"
+                data-lang-en="About Comparison"
+                data-lang-tl="Tungkol sa Paghahambing"
             >
                 About Comparison
             </button>
@@ -212,6 +221,8 @@
             <button
                 class="info-option"
                 data-section="process"
+                data-lang-en="Comparison Process"
+                data-lang-tl="Proseso ng Paghahambing"
             >
                 Comparison Process
             </button>
@@ -219,6 +230,8 @@
             <button
                 class="info-option"
                 data-section="analysis"
+                data-lang-en="Password Features"
+                data-lang-tl="Mga Tampok ng Password"
             >
                 Password Features
             </button>
@@ -226,6 +239,8 @@
             <button
                 class="info-option"
                 data-section="methods"
+                data-lang-en="Security Differences"
+                data-lang-tl="Mga Pagkakaiba sa Sekuridad"
             >
                 Security Differences
             </button>
@@ -233,6 +248,8 @@
             <button
                 class="info-option"
                 data-section="decision"
+                data-lang-en="Decision Tree"
+                data-lang-tl="Decision Tree"
             >
                 Decision Tree
             </button>
@@ -240,6 +257,8 @@
             <button
                 class="info-option"
                 data-section="tutorial"
+                data-lang-en="Tutorial"
+                data-lang-tl="Tutorial"
             >
                 Tutorial
             </button>
@@ -253,7 +272,7 @@
 
             <div class="info-header">
 
-                <h2 id="infoTitle">
+                <h2 id="infoTitle" data-lang-en="About Comparison" data-lang-tl="Tungkol sa Paghahambing">
                     About Comparison
                 </h2>
 
@@ -273,23 +292,26 @@
                 id="infoContent"
             >
 
-                <h3>
+                <h3 data-lang-en="Password Comparison Assessment" data-lang-tl="Pagtatasa ng Paghahambing ng Password">
                     Password Comparison Assessment
                 </h3>
 
-                <p>
+                <p data-lang-en="This comparison test allows users to evaluate another password and compare its vulnerability against a previously analyzed password."
+                   data-lang-tl="Ang pagsusuring ito ay nagpapahintulot sa mga user na suriin ang isa pang password at ihambing ang vulnerability nito sa naunang nasuring password.">
                     This comparison test allows users to evaluate
                     another password and compare its vulnerability
                     against a previously analyzed password.
                 </p>
 
-                <p>
+                <p data-lang-en="The system extracts password characteristics and determines whether the new password provides better protection against possible cracking strategies."
+                   data-lang-tl="Kinukuha ng sistema ang mga katangian ng password at tinutukoy kung ang bagong password ay nagbibigay ng mas mahusay na proteksyon laban sa mga posibleng estratehiya sa pag-hack.">
                     The system extracts password characteristics
                     and determines whether the new password provides
                     better protection against possible cracking strategies.
                 </p>
 
-                <p>
+                <p data-lang-en="Only extracted password features are processed. The original password is not stored by the system."
+                   data-lang-tl="Ang mga kinuhang katangian lamang ng password ang pinoproseso. Ang orihinal na password ay hindi iniiimbak ng sistema.">
                     Only extracted password features are processed.
                     The original password is not stored by the system.
                 </p>
@@ -300,6 +322,48 @@
 
     </div>
 
+    <script>
+        /* =========================================================
+           LANGUAGE HELPER & TRANSLATIONS FOR COMPARISONTEST.HTML
+           ========================================================= */
+        function getCurrentLang() {
+            return localStorage.getItem("app_lang") || "en";
+        }
+
+        function updatePageLanguage() {
+            const lang = getCurrentLang();
+
+            // Update title
+            const titleElem = document.querySelector("title[data-lang-en]");
+            if (titleElem) {
+                document.title = titleElem.getAttribute(`data-lang-${lang}`) || titleElem.getAttribute("data-lang-en");
+            }
+
+            // Update text elements
+            document.querySelectorAll("[data-lang-en]").forEach(elem => {
+                const text = elem.getAttribute(`data-lang-${lang}`);
+                if (text) {
+                    elem.textContent = text;
+                }
+            });
+
+            // Update placeholders
+            document.querySelectorAll("[data-placeholder-en]").forEach(elem => {
+                const placeholder = elem.getAttribute(`data-placeholder-${lang}`);
+                if (placeholder) {
+                    elem.placeholder = placeholder;
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            updatePageLanguage();
+        });
+
+        window.addEventListener("languageChanged", () => {
+            updatePageLanguage();
+        });
+    </script>
 
     <script src="../js/comparisonTest.js"></script>
 

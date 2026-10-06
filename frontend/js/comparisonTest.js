@@ -1,5 +1,15 @@
 // COMPARISON TEST PAGE - comparisonTest.js
 fetch("https://thesissystemlatest.onrender.com/analyze", { method: "HEAD" }).catch(() => {});
+
+/* =========================================================
+   LANGUAGE HELPER
+   ========================================================= */
+
+function getCurrentLang() {
+    return localStorage.getItem("app_lang") || "en";
+}
+
+
 // PASSWORD VISIBILITY TOGGLE
 const passwordInput = document.getElementById("comparePasswordInput");
 const togglePassword = document.getElementById("togglePassword");
@@ -352,241 +362,472 @@ function updateSlide(index) {
 }
 
 
-// INFORMATION DATA
-const informationData = {
+// INFORMATION DATA (TRANSLATED DICTIONARY)
+function getInformationData(lang = "en") {
+    if (lang === "tl") {
+        return {
+            about: {
+                title: "Tungkol sa Pagsusuri ng Paghahambing",
+                content: `
+                <h3>Pagsusuri sa Paghahambing ng Password</h3>
 
-    about: {
-        title: "About Comparison Test",
-        content: `
-        <h3>Password Comparison Assessment</h3>
+                <p>
+                Ang tampok na ito ay nagbibigay-daan sa mga user na magsuri ng isa pang
+                password at ihambing ang posibleng kahinaan nito
+                laban sa naunang nasuring password.
+                </p>
 
-        <p>
-        This feature allows users to evaluate another
-        password and compare its possible vulnerability
-        against the previously analyzed password.
-        </p>
+                <p>
+                Sinusuri ng system ang mga katangian ng password at itinatakda kung ang bagong password ay nagbibigay ng
+                mas malakas o mas mahinang proteksyon laban sa mga posibleng
+                estratehiya ng pag-crack.
+                </p>
 
-        <p>
-        The system examines password characteristics
-        and determines whether the new password provides
-        stronger or weaker protection against possible
-        cracking strategies.
-        </p>
+                <p>
+                Mga kinuhang feature ng password lamang ang pinoproseso.
+                Ang orihinal na password ay hindi itinatago ng system.
+                </p>
+                `
+            },
 
-        <p>
-        Only extracted password features are processed.
-        The original password is not stored by the system.
-        </p>
-        `
-    },
+            process: {
+                title: "Proseso ng Paghahambing",
+                content: `
+                <h3>Daloy ng Paghahambing ng Password</h3>
 
-    process: {
-        title: "Comparison Process",
-        content: `
-        <h3>Password Comparison Flow</h3>
+                <ol>
+                    <li>Magpapasok ang user ng bagong password para ihambing.</li>
+                    <li>Kukunin ng system ang mga katangian ng password.</li>
+                    <li>Susuriin ang nabuong representasyon ng password.</li>
+                    <li>Tukuyin ng Decision Tree classifier ang posibleng kategorya ng kahinaan.</li>
+                    <li>Ihahambing ang resulta ng bagong password sa naunang pagsusuri.</li>
+                    <li>Ipapalabas ang mga kaalaman sa seguridad at mga pagpapabuti.</li>
+                </ol>
+                `
+            },
 
-        <ol>
-            <li>User enters a new password for comparison.</li>
-            <li>The system extracts password characteristics.</li>
-            <li>The generated password representation is evaluated.</li>
-            <li>The Decision Tree classifier identifies the possible vulnerability category.</li>
-            <li>The new password result is compared with the previous analysis.</li>
-            <li>Security insights and improvements are displayed.</li>
-        </ol>
-        `
-    },
+            analysis: {
+                title: "Mga Inihambing na Katangian ng Password",
+                content: `
+                <h3>Mga Kinuhang Katangian ng Password</h3>
 
-    analysis: {
-        title: "Password Features Compared",
-        content: `
-        <h3>Extracted Password Characteristics</h3>
+                <p>
+                Inihahambing ng system ang mga istruktura ng password nang
+                hindi itinatago ang orihinal na password.
+                </p>
 
-        <p>
-        The system compares password structures without
-        storing the original password.
-        </p>
+                <ul>
+                    <li>Haba ng Password</li>
+                    <li>Paggamit ng Maliliit at Malalaking Titik</li>
+                    <li>Pagkakaroon ng Numero at Simbolo</li>
+                    <li>Pagtukoy sa Salitang Diksyonaryo</li>
+                    <li>Mga Pattern ng Leetspeak</li>
+                    <li>Magkakasunod na Pattern (Sequential)</li>
+                    <li>Inuulit na mga Karakter</li>
+                    <li>Mga Pattern na Batay sa Alituntunin (Rule-Based)</li>
+                </ul>
+                `
+            },
 
-        <ul>
-            <li>Password Length</li>
-            <li>Lowercase and Uppercase Usage</li>
-            <li>Number and Symbol Presence</li>
-            <li>Dictionary Word Detection</li>
-            <li>Leetspeak Patterns</li>
-            <li>Sequential Patterns</li>
-            <li>Repeated Characters</li>
-            <li>Rule-Based Patterns</li>
-        </ul>
-        `
-    },
+            methods: {
+                title: "Paghahambing ng Paraan ng Pag-crack",
+                content: `
+                <h3>Mga Kategorya ng Kahinaan</h3>
 
-    methods: {
-        title: "Cracking Methods Comparison",
-        content: `
-        <h3>Vulnerability Categories</h3>
+                <ul>
+                    <li>
+                        <strong>Dictionary Attack</strong>
+                        <br>
+                        Pagtukoy sa mga password na gumagamit ng karaniwang salita
+                        o madaling hulaang parirala.
+                    </li>
 
-        <ul>
-            <li>
-                <strong>Dictionary Attack</strong>
-                <br>
-                Detects passwords using common words
-                or predictable phrases.
-            </li>
+                    <li>
+                        <strong>Brute Force Attack</strong>
+                        <br>
+                        Pagsusuri sa resistensya laban sa mga pagsubok sa kombinasyon ng karakter.
+                    </li>
 
-            <li>
-                <strong>Brute Force Attack</strong>
-                <br>
-                Evaluates resistance against character
-                combination attempts.
-            </li>
+                    <li>
+                        <strong>Rule-Based Attack</strong>
+                        <br>
+                        Pagtukoy sa mga madaling hulaang pagbabago
+                        tulad ng idinagdag na numero o pagpapalit ng titik.
+                    </li>
+                </ul>
+                `
+            },
 
-            <li>
-                <strong>Rule-Based Attack</strong>
-                <br>
-                Identifies predictable modifications
-                such as added numbers or substitutions.
-            </li>
-        </ul>
-        `
-    },
+            decision: {
+                title: "Paghahambing sa Decision Tree",
+                content: `
+                <h3>Modelong Pang-klasipika</h3>
 
-    decision: {
-        title: "Decision Tree Comparison",
-        content: `
-        <h3>Classification Model</h3>
+                <p>
+                Sinusuri ng Decision Tree classifier ang
+                mga kinuhang katangian ng bagong password.
+                </p>
 
-        <p>
-        The Decision Tree classifier evaluates
-        the extracted characteristics of the new password.
-        </p>
+                <p>
+                Ang nabuong resulta ay ihahambing sa
+                naunang pagsusuri ng password.
+                </p>
 
-        <p>
-        The generated result is compared with the
-        previous password assessment.
-        </p>
+                <p>
+                Makatutulong ito upang malaman kung ang bagong password
+                ay nagbibigay ng mas pinabuting seguridad.
+                </p>
+                `
+            },
 
-        <p>
-        This helps determine whether the new password
-        provides improved security.
-        </p>
-        `
-    },
+            tutorial: {
+                title: "Tutorial sa Paghahambing",
+                content: `
+                <h3>Paano Maghambing ng mga Password</h3>
 
-    tutorial: {
-        title: "Comparison Tutorial",
-        content: `
-        <h3>How To Compare Passwords</h3>
+                <p>
+                Sundin ang mga hakbang na ito upang maghambing ng bagong password.
+                </p>
 
-        <p>
-        Follow these steps to compare a new password.
-        </p>
+                <div class="tutorial-container">
 
-        <div class="tutorial-container">
+                    <p>
+                    Hakbang 1: Ipasok ang password na nais mong ihambing.
+                    </p>
 
-            <p>
-            Step 1: Enter the password you want to compare.
-            </p>
+                    <img
+                        src="../assets/images/step1.png"
+                        alt="Hakbang 1: Ipasok ang password"
+                    >
 
-            <img
-                src="../assets/images/step1.png"
-                alt="Step 1: Enter password"
-            >
-
-        </div>
-
-
-        <div class="tutorial-container">
-
-            <p>
-            Step 2: Click compare password to process
-            the new password.
-            </p>
-
-            <img
-                src="../assets/images/step2.png"
-                alt="Step 2: Compare password"
-            >
-
-        </div>
+                </div>
 
 
-        <div class="tutorial-container">
+                <div class="tutorial-container">
 
-            <p>
-            Step 3: Review the comparison result.
-            </p>
+                    <p>
+                    Hakbang 2: I-click ang compare password upang i-proseso
+                    ang bagong password.
+                    </p>
 
-            <p>
-            Click an image to enlarge it.
-            </p>
+                    <img
+                        src="../assets/images/step2.png"
+                        alt="Hakbang 2: Ihambing ang password"
+                    >
 
-            <div class="tutorial-slider">
+                </div>
 
-                <img
-                    class="tutorial-slide active"
-                    src="../assets/images/step3%20(1).png"
-                    alt="Step 3: Comparison result 1"
-                >
 
-                <img
-                    class="tutorial-slide"
-                    src="../assets/images/step3%20(2).png"
-                    alt="Step 3: Comparison result 2"
-                >
+                <div class="tutorial-container">
 
-                <img
-                    class="tutorial-slide"
-                    src="../assets/images/step3%20(3).png"
-                    alt="Step 3: Comparison result 3"
-                >
+                    <p>
+                    Hakbang 3: Suriin ang resulta ng paghahambing.
+                    </p>
 
-                <img
-                    class="tutorial-slide"
-                    src="../assets/images/step3%20(4).png"
-                    alt="Step 3: Comparison result 4"
-                >
+                    <p>
+                    I-click ang larawan upang palakihin ito.
+                    </p>
 
-                <img
-                    class="tutorial-slide"
-                    src="../assets/images/step3%20(5).png"
-                    alt="Step 3: Comparison result 5"
-                >
+                    <div class="tutorial-slider">
 
-                <img
-                    class="tutorial-slide"
-                    src="../assets/images/step3%20(6).png"
-                    alt="Step 3: Comparison result 6"
-                >
+                        <img
+                            class="tutorial-slide active"
+                            src="../assets/images/step3%20(1).png"
+                            alt="Hakbang 3: Resulta ng paghahambing 1"
+                        >
 
-                <img
-                    class="tutorial-slide"
-                    src="../assets/images/step3%20(7).png"
-                    alt="Step 3: Comparison result 7"
-                >
+                        <img
+                            class="tutorial-slide"
+                            src="../assets/images/step3%20(2).png"
+                            alt="Hakbang 3: Resulta ng paghahambing 2"
+                        >
 
-            </div>
+                        <img
+                            class="tutorial-slide"
+                            src="../assets/images/step3%20(3).png"
+                            alt="Hakbang 3: Resulta ng paghahambing 3"
+                        >
 
-            <div class="tutorial-dots">
+                        <img
+                            class="tutorial-slide"
+                            src="../assets/images/step3%20(4).png"
+                            alt="Hakbang 3: Resulta ng paghahambing 4"
+                        >
 
-                <span class="dot active"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
+                        <img
+                            class="tutorial-slide"
+                            src="../assets/images/step3%20(5).png"
+                            alt="Hakbang 3: Resulta ng paghahambing 5"
+                        >
 
-            </div>
+                        <img
+                            class="tutorial-slide"
+                            src="../assets/images/step3%20(6).png"
+                            alt="Hakbang 3: Resulta ng paghahambing 6"
+                        >
 
-        </div>
-        `
+                        <img
+                            class="tutorial-slide"
+                            src="../assets/images/step3%20(7).png"
+                            alt="Hakbang 3: Resulta ng paghahambing 7"
+                        >
+
+                    </div>
+
+                    <div class="tutorial-dots">
+
+                        <span class="dot active"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+
+                    </div>
+
+                </div>
+                `
+            }
+        };
     }
-};
+
+    return {
+        about: {
+            title: "About Comparison Test",
+            content: `
+            <h3>Password Comparison Assessment</h3>
+
+            <p>
+            This feature allows users to evaluate another
+            password and compare its possible vulnerability
+            against the previously analyzed password.
+            </p>
+
+            <p>
+            The system examines password characteristics
+            and determines whether the new password provides
+            stronger or weaker protection against possible
+            cracking strategies.
+            </p>
+
+            <p>
+            Only extracted password features are processed.
+            The original password is not stored by the system.
+            </p>
+            `
+        },
+
+        process: {
+            title: "Comparison Process",
+            content: `
+            <h3>Password Comparison Flow</h3>
+
+            <ol>
+                <li>User enters a new password for comparison.</li>
+                <li>The system extracts password characteristics.</li>
+                <li>The generated password representation is evaluated.</li>
+                <li>The Decision Tree classifier identifies the possible vulnerability category.</li>
+                <li>The new password result is compared with the previous analysis.</li>
+                <li>Security insights and improvements are displayed.</li>
+            </ol>
+            `
+        },
+
+        analysis: {
+            title: "Password Features Compared",
+            content: `
+            <h3>Extracted Password Characteristics</h3>
+
+            <p>
+            The system compares password structures without
+            storing the original password.
+            </p>
+
+            <ul>
+                <li>Password Length</li>
+                <li>Lowercase and Uppercase Usage</li>
+                <li>Number and Symbol Presence</li>
+                <li>Dictionary Word Detection</li>
+                <li>Leetspeak Patterns</li>
+                <li>Sequential Patterns</li>
+                <li>Repeated Characters</li>
+                <li>Rule-Based Patterns</li>
+            </ul>
+            `
+        },
+
+        methods: {
+            title: "Cracking Methods Comparison",
+            content: `
+            <h3>Vulnerability Categories</h3>
+
+            <ul>
+                <li>
+                    <strong>Dictionary Attack</strong>
+                    <br>
+                    Detects passwords using common words
+                    or predictable phrases.
+                </li>
+
+                <li>
+                    <strong>Brute Force Attack</strong>
+                    <br>
+                    Evaluates resistance against character
+                    combination attempts.
+                </li>
+
+                <li>
+                    <strong>Rule-Based Attack</strong>
+                    <br>
+                    Identifies predictable modifications
+                    such as added numbers or substitutions.
+                </li>
+            </ul>
+            `
+        },
+
+        decision: {
+            title: "Decision Tree Comparison",
+            content: `
+            <h3>Classification Model</h3>
+
+            <p>
+            The Decision Tree classifier evaluates
+            the extracted characteristics of the new password.
+            </p>
+
+            <p>
+            The generated result is compared with the
+            previous password assessment.
+            </p>
+
+            <p>
+            This helps determine whether the new password
+            provides improved security.
+            </p>
+            `
+        },
+
+        tutorial: {
+            title: "Comparison Tutorial",
+            content: `
+            <h3>How To Compare Passwords</h3>
+
+            <p>
+            Follow these steps to compare a new password.
+            </p>
+
+            <div class="tutorial-container">
+
+                <p>
+                Step 1: Enter the password you want to compare.
+                </p>
+
+                <img
+                    src="../assets/images/step1.png"
+                    alt="Step 1: Enter password"
+                >
+
+            </div>
+
+
+            <div class="tutorial-container">
+
+                <p>
+                Step 2: Click compare password to process
+                the new password.
+                </p>
+
+                <img
+                    src="../assets/images/step2.png"
+                    alt="Step 2: Compare password"
+                >
+
+            </div>
+
+
+            <div class="tutorial-container">
+
+                <p>
+                Step 3: Review the comparison result.
+                </p>
+
+                <p>
+                Click an image to enlarge it.
+                </p>
+
+                <div class="tutorial-slider">
+
+                    <img
+                        class="tutorial-slide active"
+                        src="../assets/images/step3%20(1).png"
+                        alt="Step 3: Comparison result 1"
+                    >
+
+                    <img
+                        class="tutorial-slide"
+                        src="../assets/images/step3%20(2).png"
+                        alt="Step 3: Comparison result 2"
+                    >
+
+                    <img
+                        class="tutorial-slide"
+                        src="../assets/images/step3%20(3).png"
+                        alt="Step 3: Comparison result 3"
+                    >
+
+                    <img
+                        class="tutorial-slide"
+                        src="../assets/images/step3%20(4).png"
+                        alt="Step 3: Comparison result 4"
+                    >
+
+                    <img
+                        class="tutorial-slide"
+                        src="../assets/images/step3%20(5).png"
+                        alt="Step 3: Comparison result 5"
+                    >
+
+                    <img
+                        class="tutorial-slide"
+                        src="../assets/images/step3%20(6).png"
+                        alt="Step 3: Comparison result 6"
+                    >
+
+                    <img
+                        class="tutorial-slide"
+                        src="../assets/images/step3%20(7).png"
+                        alt="Step 3: Comparison result 7"
+                    >
+
+                </div>
+
+                <div class="tutorial-dots">
+
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+
+                </div>
+
+            </div>
+            `
+        }
+    };
+}
 
 
 // INFORMATION BUTTONS
 infoButtons.forEach(button => {
 
     button.addEventListener("click", () => {
+        const lang = getCurrentLang();
+        const informationData = getInformationData(lang);
 
         const section =
             button.dataset.section;
@@ -654,6 +895,7 @@ if (passwordInput && compareButton) {
     compareButton.addEventListener(
         "click",
         async () => {
+            const lang = getCurrentLang();
 
             const password =
                 passwordInput.value.trim();
@@ -677,8 +919,7 @@ if (passwordInput && compareButton) {
 
             compareButton.disabled = true;
 
-            compareButton.textContent =
-                "Analyzing...";
+            compareButton.textContent = lang === "tl" ? "Sinusuri..." : "Analyzing...";
 
 
             try {
@@ -757,13 +998,14 @@ if (passwordInput && compareButton) {
                 );
 
                 alert(
-                    "Unable to connect to analysis server."
+                    lang === "tl"
+                        ? "Hindi makakonekta sa analysis server."
+                        : "Unable to connect to analysis server."
                 );
 
                 compareButton.disabled = false;
 
-                compareButton.textContent =
-                    "Compare Password";
+                compareButton.textContent = lang === "tl" ? "Ihambing ang Password" : "Compare Password";
             }
         }
     );
@@ -781,23 +1023,31 @@ const buttonInfoText =
     document.getElementById("buttonInfoText");
 
 
-const buttonDescriptions = {
-
-    reset: {
-        title: "Reset Password Test",
-
-        text:
-            "Returns to the Initial Test page where you can analyze a new password from the beginning."
-    },
-
-    compare: {
-        title: "Compare Password",
-
-        text:
-            "Analyzes the entered password and compares its vulnerability against the previous password assessment."
+function getButtonDescriptions(lang = "en") {
+    if (lang === "tl") {
+        return {
+            reset: {
+                title: "I-reset ang Subok sa Password",
+                text: "Babalik sa paunang pahina ng pagsusuri kung saan maaari kang magsimula ng bagong pagsusuri ng password mula sa simula."
+            },
+            compare: {
+                title: "Ihambing ang Password",
+                text: "Sinusuri ang ipinasok na password at inihahambing ang kahinaan nito laban sa naunang pagsusuri ng password."
+            }
+        };
     }
 
-};
+    return {
+        reset: {
+            title: "Reset Password Test",
+            text: "Returns to the Initial Test page where you can analyze a new password from the beginning."
+        },
+        compare: {
+            title: "Compare Password",
+            text: "Analyzes the entered password and compares its vulnerability against the previous password assessment."
+        }
+    };
+}
 
 
 function showButtonInfo(type, button) {
@@ -805,6 +1055,9 @@ function showButtonInfo(type, button) {
     if (!buttonInfo) {
         return;
     }
+
+    const lang = getCurrentLang();
+    const buttonDescriptions = getButtonDescriptions(lang);
 
     const data =
         buttonDescriptions[type];

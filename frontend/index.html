@@ -35,7 +35,7 @@
 </head>
 <body>
     <div id="message">
-        <h1>Password Vulnerability Classification System </h1>
+        <h1 id="title">Password Vulnerability Classification System</h1>
 
         <p id="status">
             Starting system...
@@ -43,17 +43,47 @@
     </div>
 
     <script>
+        /* =========================================================
+           LANGUAGE HELPER & TRANSLATIONS
+           ========================================================= */
+        function getCurrentLang() {
+            return localStorage.getItem("app_lang") || "en";
+        }
+
+        function getTranslations(lang = "en") {
+            if (lang === "tl") {
+                return {
+                    title: "Password Vulnerability Classification System",
+                    starting: "Pagsisimula ng sistema...",
+                    fileError: "<strong>Hindi masimulan ang proyekto.</strong><br><br>" +
+                               "Ang sistemang ito ay kailangang buksan sa pamamagitan ng isang local web server.<br><br>" +
+                               "Mangyaring patakbuhin ang proyekto mula sa Visual Studio Code o iba pang local server, pagkatapos ay buksan ang ibinigay na localhost address."
+                };
+            }
+
+            return {
+                title: "Password Vulnerability Classification System",
+                starting: "Starting system...",
+                fileError: "<strong>Project cannot start.</strong><br><br>" +
+                           "This system must be opened through a local web server.<br><br>" +
+                           "Please run the project from Visual Studio Code or another local server, then open the provided localhost address."
+            };
+        }
+
+        const lang = getCurrentLang();
+        const t = getTranslations(lang);
+
+        document.getElementById("title").textContent = t.title;
+
         // SYSTEM STARTUP
         // Project opened directly from file explorer
         if (window.location.protocol === "file:") {
-            document.getElementById("status").innerHTML =
-                "<strong>Project cannot start.</strong><br><br>" +
-                "This system must be opened through a local web server.<br><br>" +
-                "Please run the project from Visual Studio Code or another local server, then open the provided localhost address.";
+            document.getElementById("status").innerHTML = t.fileError;
         }
 
         // Project opened correctly
         else {
+            document.getElementById("status").textContent = t.starting;
             window.location.replace("pages/consent.html");
         }
     </script>

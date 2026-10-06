@@ -1,6 +1,63 @@
 const DecisionTree = (() => {
     let renderedTree = null;
 
+    /* =========================================================
+       LANGUAGE HELPER & TRANSLATIONS
+       ========================================================= */
+    function getCurrentLang() {
+        return localStorage.getItem("app_lang") || "en";
+    }
+
+    function getTranslations(lang = "en") {
+        if (lang === "tl") {
+            return {
+                noAttackVector: "Walang natukoy na mga katangian ng pag-atake.",
+                defaultTreeExplanation: "Sinuri ng Decision Tree ang feature vector at tinahak ang mga node upang marating ang klasipikasyong ito.",
+                dictExplanation: (hasDict) => 
+                    `Tinahak ng Decision Tree ang mga root condition node at sinuri ang <strong>dictionary_present = ${hasDict ? 1 : 0}</strong>. Dahil tumugma ang password sa isang kilalang salita sa diksiyonaryo nang walang malaking pagbabago sa tuntunin, nagwakas ang daanan sa <strong>DICTIONARY</strong> leaf node.`,
+                ruleExplanation: 
+                    `Sinuri ng modelo ang mga kondisyon ng feature nang hakbang-hakbang at nakakita ng mga pagbabago sa istruktura (tulad ng leetspeak substitution, numeric suffix, o pag-uulit ng karakter). Ang daanan ng desisyon ay lumampas sa purong pagtukoy sa diksiyonaryo at napunta sa <strong>RULE-BASED</strong> classification node.`,
+                bruteExplanation: (length) => 
+                    `Laktawan ng pagtawid ang mga node ng pagtutugma sa diksiyonaryo dahil sa mababang koneksyon sa salita, sinuri ang haba (${length} karakter) at espasyo ng karakter, at nagwakas sa <strong>BRUTE-FORCE</strong> leaf node.`,
+                structuralText: (length, classCount, hasLeetspeak, hasDict) => {
+                    let text = `Ang password na ito ay may haba na ${length} karakter at gumagamit ng ${classCount} (na) uri ng karakter. `;
+                    if (hasLeetspeak) {
+                        text += `Natukoy sa pagsusuri sa istruktura ang mga kapalit na karakter kung saan ang mga simbolo o numero ay ipinalit sa karaniwang titik. `;
+                    }
+                    if (hasDict) {
+                        text += `Ang pangunahing arkitektura nito ay nagmula sa isang kilalang salita sa diksiyonaryo, na nagpapababa sa pangkalahatang pagiging kumplikado ng istruktura.`;
+                    } else {
+                        text += `Ang kawalan ng salita mula sa diksiyonaryo ay nagdidirekta sa pagsusuri ng istruktura sa mga sukatan ng haba at espasyo ng karakter.`;
+                    }
+                    return text;
+                }
+            };
+        }
+
+        return {
+            noAttackVector: "No attack characteristics identified.",
+            defaultTreeExplanation: "The Decision Tree evaluated the feature vector and traversed the nodes to reach this classification.",
+            dictExplanation: (hasDict) => 
+                `The Decision Tree navigated through root condition nodes and evaluated <strong>dictionary_present = ${hasDict ? 1 : 0}</strong>. Because the password matched a known word entry without significant rule modifications, the path terminated directly at the <strong>DICTIONARY</strong> leaf node.`,
+            ruleExplanation: 
+                `The model evaluated the feature conditions step-by-step and detected structural modifications (such as leetspeak substitutions, numeric suffixes, or character repetitions). The decision path branched past pure dictionary detection and resolved into the <strong>RULE-BASED</strong> classification node.`,
+            bruteExplanation: (length) => 
+                `The traversal bypassed dictionary matching nodes due to low word connection, evaluated length (${length} characters) and character space, and concluded at the <strong>BRUTE-FORCE</strong> leaf node.`,
+            structuralText: (length, classCount, hasLeetspeak, hasDict) => {
+                let text = `This password spans ${length} characters and utilizes ${classCount} character class(es). `;
+                if (hasLeetspeak) {
+                    text += `The structural evaluation mapped character substitutions where symbols or numbers replaced standard alphabetic letters. `;
+                }
+                if (hasDict) {
+                    text += `Its core architecture originates from a recognized dictionary root, reducing overall structural complexity.`;
+                } else {
+                    text += `The absence of a dictionary root directs the structural evaluation entirely toward length and character space metrics.`;
+                }
+                return text;
+            }
+        };
+    }
+
     function getRealChildEdges(node) {
         if (
             !node ||
@@ -106,66 +163,56 @@ const DecisionTree = (() => {
         if (!explanation) return;
 
         const assessment = data.security_assessment || {};
+        const lang = getCurrentLang();
+        const t = getTranslations(lang);
 
         // 1. Unang iche-check kung may explicit na custom DT explanation mula sa backend
         let vulnerabilityExplanation = data.decision_tree_explanation;
 
-        // 2. Kung wala, mag-generate ng hiwalay at Decision-Tree-specific narrative
+        // 2. Kung wala, mag-generate ng hiwalay at Decision-Tree-specific narrative batay sa napiling wika
         if (!vulnerabilityExplanation) {
-            vulnerabilityExplanation = generateTreeSpecificExplanation(data);
+            vulnerabilityExplanation = generateTreeSpecificExplanation(data, lang);
         }
 
         explanation.innerHTML = censorPassword(vulnerabilityExplanation, data.password);
 
         if (attackVector) {
-            attackVector.innerHTML = censorPassword(assessment.attack_vector || "No attack characteristics identified.", data.password);
+            attackVector.innerHTML = censorPassword(assessment.attack_vector || t.noAttackVector, data.password);
         }
 
         if (structuralInsights) {
             const length = data.features?.length || data.length || 0;
             const classCount = data.features?.character_class_count || 1;
+            const hasLeetspeak = !!data.features?.has_leetspeak;
+            const hasDict = data.features?.dictionary_present === 1;
 
-            let structuralText = `This password spans ${length} characters and utilizes ${classCount} character class(es). `;
-            if (data.features?.has_leetspeak) {
-                structuralText += `The structural evaluation mapped character substitutions where symbols or numbers replaced standard alphabetic letters. `;
-            }
-            if (data.features?.dictionary_present) {
-                structuralText += `Its core architecture originates from a recognized dictionary root, reducing overall structural complexity.`;
-            } else {
-                structuralText += `The absence of a dictionary root directs the structural evaluation entirely toward length and character space metrics.`;
-            }
-
+            const structuralText = t.structuralText(length, classCount, hasLeetspeak, hasDict);
             structuralInsights.innerHTML = censorPassword(structuralText, data.password);
         }
 
         activatePasswordReveal();
     }
 
-    // Bagong helper function para sa Decision Tree-specific logic
-    function generateTreeSpecificExplanation(data) {
+    // Bagong helper function para sa Decision Tree-specific logic na may kasamang wika
+    function generateTreeSpecificExplanation(data, lang) {
         const type = data.vulnerability;
         const length = data.features?.length || data.length || 0;
         const hasDict = data.features?.dictionary_present === 1;
+        const t = getTranslations(lang);
 
         if (type === "DICTIONARY") {
-            return `The Decision Tree navigated through root condition nodes and evaluated <strong>dictionary_present = ${hasDict ? 1 : 0}</strong>.
-            Because the password matched a known word entry without significant rule modifications, the path terminated directly at the
-            <strong>DICTIONARY</strong>
-            leaf node.`;
+            return t.dictExplanation(hasDict);
         }
 
         if (type === "RULE-BASED") {
-            return `The model evaluated the feature conditions step-by-step and detected structural modifications
-            (such as leetspeak substitutions, numeric suffixes, or character repetitions).
-            The decision path branched past pure dictionary detection and resolved into the <strong>RULE-BASED</strong> classification node.`;
+            return t.ruleExplanation;
         }
 
         if (type === "BRUTE-FORCE") {
-            return `The traversal bypassed dictionary matching nodes due to low word connection,
-            evaluated length (${length} characters) and character space, and concluded at the <strong>BRUTE-FORCE</strong> leaf node.`;
+            return t.bruteExplanation(length);
         }
 
-        return "The Decision Tree evaluated the feature vector and traversed the nodes to reach this classification.";
+        return t.defaultTreeExplanation;
     }
 
     function renderDecisionTree(tree) {

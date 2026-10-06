@@ -10,7 +10,6 @@ app.use(express.json());
 
 // ===== LOAD ML MODEL =====
 const model = JSON.parse(fs.readFileSync(path.join(__dirname, "classification_model.json")));
-
 const classifier = DecisionTreeClassifier.load(model);
 console.log("✅ ML model loaded");
 
@@ -142,20 +141,16 @@ function checkSequence(str) {
     return 0;
 }
 
-// ===== 1. FEATURE EXTRACTION (UPDATED FOR EXACT DICTIONARY REPETITIONS) =====
+// ===== 1. FEATURE EXTRACTION =====
 function extractFeatures(password) {
     const originalPassword = password;
 
-    // --- NUMERIC POSITIONS ---
     const numericPrefix = /^\d+/.test(originalPassword) ? 1 : 0;
     const numericSuffix = /\d+$/.test(originalPassword) ? 1 : 0;
     const middlePart = originalPassword.replace(/^\d+/, '').replace(/\d+$/, '');
     const numericInfix = /\d+/.test(middlePart) ? 1 : 0;
 
-    // --- CAMELCASE SPLITTING ---
     const camelSplit = originalPassword.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
-
-    // --- LEET NORMALIZATION ---
     const leetNormalized = normalizeLeet(camelSplit);
     const alphaTokens = leetNormalized.split(/[^a-z]+/).filter(Boolean);
 
@@ -164,7 +159,6 @@ function extractFeatures(password) {
     let totalMatchedLength = 0;
     let longestMatch = "";
 
-    // --- ACCURATE DICTIONARY MATCHING ---
     for (const token of alphaTokens) {
         if (token.length < 3) continue;
 
@@ -197,7 +191,6 @@ function extractFeatures(password) {
         dictionaryDetected = 1;
     }
 
-    // --- PRECISE LEETSPEAK DETECTION ---
     const strippedMiddle = originalPassword.replace(/^\d+/, '').replace(/\d+$/, '');
     const hasEmbeddedLeet = /([a-zA-Z][@$40531!\(\[\<+]|[a-zA-Z0-9][@$!\(\[\<+][a-zA-Z0-9]|[@$40531!\(\[\<+][a-zA-Z])/.test(strippedMiddle);
 
@@ -206,8 +199,6 @@ function extractFeatures(password) {
 
     const hasLeetspeak = dictionaryDetected && (hasEmbeddedLeet || (!rawMatched && /[@$40531!\(\[\<+]/.test(strippedMiddle))) ? 1 : 0;
 
-    // --- EXACT DICTIONARY CHECK ---
-    // Checks if the password consists strictly of exact dictionary words without numbers, symbols, or leetspeak
     const allRawTokensExact = rawTokens.length > 0 && rawTokens.every(t => englishSet.has(t) || tagalogSet.has(t));
     const isExactDictionary = allRawTokensExact && !/\d/.test(originalPassword) && !/[^A-Za-z0-9]/.test(originalPassword) && !hasLeetspeak;
 
@@ -246,7 +237,7 @@ function extractFeatures(password) {
     return extractedFeatures;
 }
 
-// ===== PASSWORD COMPARISON =====
+// ===== SECURITY SCORE & COMPARISON =====
 function calculateSecurityScore(features) {
     let score = 0;
     score += features.length * 2;
@@ -259,18 +250,37 @@ function calculateSecurityScore(features) {
     return score;
 }
 
-function comparePasswords(currentFeatures, previousFeatures, currentRiskLevel, previousRiskLevel) {
+function comparePasswords(currentFeatures, previousFeatures, currentRiskLevel, previousRiskLevel, lang = 'en') {
     const riskRank = { "CRITICAL": 0, "HIGH": 1, "MODERATE": 2 };
 
     const scoreCurrent = calculateSecurityScore(currentFeatures);
     const scorePrevious = calculateSecurityScore(previousFeatures);
+
+    const msgs = {
+        en: {
+            CURRENT_PREF_RISK: "Your current password has a safer ML risk classification compared to your previous password.",
+            PREVIOUS_PREF_RISK: "Your previous password has a safer ML risk classification compared to your current password.",
+            CURRENT_PREF_SCORE: "Your current password has favorable security characteristics compared to your previous password.",
+            PREVIOUS_PREF_SCORE: "Your previous password has favorable security characteristics compared to your current password.",
+            SIMILAR: "Your current and previous passwords have similar security characteristics."
+        },
+        tl: {
+            CURRENT_PREF_RISK: "Ang iyong kasalukuyang password ay may mas ligtas na uri ng panganib (ML risk) kumpara sa nakaraang password.",
+            PREVIOUS_PREF_RISK: "Ang iyong nakaraang password ay may mas ligtas na uri ng panganib (ML risk) kumpara sa kasalukuyang password.",
+            CURRENT_PREF_SCORE: "Ang iyong kasalukuyang password ay may mas magandang katangiang pangkapanatagan kumpara sa nakaraang password.",
+            PREVIOUS_PREF_SCORE: "Ang iyong nakaraang password ay may mas magandang katangiang pangkapanatagan kumpara sa kasalukuyang password.",
+            SIMILAR: "Ang kasalukuyan at nakaraang password ay may magkaparehong katangiang pangkapanatagan."
+        }
+    };
+
+    const m = msgs[lang] || msgs['en'];
 
     if (riskRank[currentRiskLevel] > riskRank[previousRiskLevel]) {
         return {
             status: "CURRENT_PREFERRED",
             current_score: scoreCurrent,
             previous_score: scorePrevious,
-            message: "Your current password has a safer ML risk classification compared to your previous password."
+            message: m.CURRENT_PREF_RISK
         };
     }
 
@@ -279,7 +289,7 @@ function comparePasswords(currentFeatures, previousFeatures, currentRiskLevel, p
             status: "PREVIOUS_PREFERRED",
             current_score: scoreCurrent,
             previous_score: scorePrevious,
-            message: "Your previous password has a safer ML risk classification compared to your current password."
+            message: m.PREVIOUS_PREF_RISK
         };
     }
 
@@ -288,7 +298,7 @@ function comparePasswords(currentFeatures, previousFeatures, currentRiskLevel, p
             status: "CURRENT_PREFERRED",
             current_score: scoreCurrent,
             previous_score: scorePrevious,
-            message: "Your current password has favorable security characteristics compared to your previous password."
+            message: m.CURRENT_PREF_SCORE
         };
     }
 
@@ -297,7 +307,7 @@ function comparePasswords(currentFeatures, previousFeatures, currentRiskLevel, p
             status: "PREVIOUS_PREFERRED",
             current_score: scoreCurrent,
             previous_score: scorePrevious,
-            message: "Your previous password has favorable security characteristics compared to your current password."
+            message: m.PREVIOUS_PREF_SCORE
         };
     }
 
@@ -305,12 +315,12 @@ function comparePasswords(currentFeatures, previousFeatures, currentRiskLevel, p
         status: "SIMILAR",
         current_score: scoreCurrent,
         previous_score: scorePrevious,
-        message: "Your current and previous passwords have similar security characteristics."
+        message: m.SIMILAR
     };
 }
 
 // ===== 2. PASSWORD CLASSIFICATION =====
-function classifyPassword(extractedFeatures) {
+function classifyPassword(extractedFeatures, lang = 'en') {
     const modelFeatures = [[
         extractedFeatures.length,
         extractedFeatures.character_class_count,
@@ -328,9 +338,7 @@ function classifyPassword(extractedFeatures) {
         extractedFeatures.rule_pattern_present
     ]];
 
-    console.log("MODEL FEATURES:", modelFeatures);
     const prediction = classifier.predict(modelFeatures);
-    console.log("RAW PREDICTION:", prediction);
 
     const labelMap = {
         0: "DICTIONARY",
@@ -340,21 +348,19 @@ function classifyPassword(extractedFeatures) {
 
     let finalLabel = labelMap[prediction[0]];
 
-    // Override for Exact Dictionary words:
-    // If it's a real dictionary word (or combination of real dictionary words), keep as DICTIONARY
-    // even if natural double letters (like 'll' in hello or 'ss' in password) triggered has_repetition.
     if (extractedFeatures._is_exact_dictionary === 1) {
         finalLabel = "DICTIONARY";
     } else if (extractedFeatures.dictionary_present === 1 && extractedFeatures.rule_pattern_present === 0) {
         finalLabel = "DICTIONARY";
     }
 
+    const pathText = lang === 'tl'
+        ? ["Sinisiyasat ang iyong password batay sa istraktura at mga pattern nito", `Hula/Prediksyon: ${finalLabel}`]
+        : ["Your password has been analyzed based on its structure and patterns", `Prediction: ${finalLabel}`];
+
     return {
         label: finalLabel,
-        path: [
-            "Your password has been analyzed based on its structure and patterns",
-            `Prediction: ${finalLabel}`
-        ]
+        path: pathText
     };
 }
 
@@ -395,7 +401,7 @@ function classifyRisk(extractedFeatures) {
 }
 
 // ===== 2c. RECOMMENDATION CLASSIFICATION =====
-function classifyRecommendation(extractedFeatures) {
+function classifyRecommendation(extractedFeatures, lang = 'en') {
     if (!recommendationClassifier) {
         return { label: null, steps: [] };
     }
@@ -428,12 +434,12 @@ function classifyRecommendation(extractedFeatures) {
     };
 
     const label = recommendationLabelMap[prediction[0]] || null;
-    const steps = buildManualFeatureSteps(extractedFeatures);
+    const steps = buildManualFeatureSteps(extractedFeatures, lang);
 
     return { label, steps };
 }
 
-function buildManualFeatureSteps(extractedFeatures) {
+function buildManualFeatureSteps(extractedFeatures, lang = 'en') {
     const steps = [];
 
     for (const key of DECISION_TREE_ORDER) {
@@ -443,21 +449,74 @@ function buildManualFeatureSteps(extractedFeatures) {
         const threshold = MANUAL_TREE_THRESHOLDS[meta.key] ?? 1;
         const actualValue = extractedFeatures[meta.key];
         const tookRight = actualValue >= threshold;
+        const expObj = meta.explain[lang] || meta.explain['en'];
 
         steps.push({
             feature: meta.key,
-            label: FEATURE_LABELS[meta.key],
+            label: FEATURE_LABELS[lang][meta.key],
             threshold: threshold,
             actualValue: actualValue,
             direction: tookRight ? "higher" : "lower",
-            explanation: tookRight ? meta.explain.YES : meta.explain.NO
+            explanation: tookRight ? expObj.YES : expObj.NO
         });
     }
 
     return steps;
 }
 
-function buildRiskModelRationale(features, level, vulnerabilityType) {
+function buildRiskModelRationale(features, level, vulnerabilityType, lang = 'en') {
+    if (lang === 'tl') {
+        const detected = [];
+        const notDetected = [];
+
+        if (features.dictionary_present) detected.push("salitang mula sa diksyonaryo"); else notDetected.push("salitang diksyonaryo");
+        if (features.numeric_suffix) detected.push("numero sa dulo"); else notDetected.push("numero sa dulo");
+        if (features.has_sequence) detected.push("sunod-sunod na pattern"); else notDetected.push("sequence");
+        if (features.has_leetspeak) detected.push("leetspeak"); else notDetected.push("leetspeak");
+        if (features.numeric_prefix) detected.push("numero sa simula"); else notDetected.push("numero sa simula");
+        if (features.numeric_infix) detected.push("numero sa gitna"); else notDetected.push("numero sa gitna");
+        if (features.has_repetition) detected.push("inulit na karakter"); else notDetected.push("inulit na karakter");
+
+        let detectionSentence = "";
+        if (features.dictionary_present) {
+            detectionSentence = `May natukoy na ${detected.join(", ")}, habang walang nahanap na ${notDetected.filter(d => d !== 'salitang diksyonaryo').join(", ")}.`;
+        } else if (features.numeric_infix && !features.dictionary_present) {
+            detectionSentence = `Walang natukoy na salitang diksyonaryo, leetspeak, numero sa simula o dulo, sequence, o inulit na karakter. May nahanap na mga numero sa gitna ng password,`;
+        } else if (detected.length === 0) {
+            detectionSentence = "Walang natukoy na salitang diksyonaryo, leetspeak, numero sa simula o dulo, sequence, o inulit na karakter.";
+        } else {
+            detectionSentence = `May natukoy na ${detected.join(", ")}, habang walang nahanap na ${notDetected.join(", ")}.`;
+        }
+
+        const presentClasses = [];
+        if (features.has_lowercase) presentClasses.push("maliit na titik");
+        if (features.has_uppercase) presentClasses.push("malaking titik");
+        if (features.has_digit) presentClasses.push("numero");
+        if (features.has_symbol) presentClasses.push("simbolo");
+
+        const charCount = features.character_class_count;
+        const charGuideline = charCount >= 3 ? "naumakay sa pamantayan." : "mababa sa pamantayang 3 uri.";
+        const charSentence = `at may ${presentClasses.join(", ")}, kaya mayroon itong ${charCount} uri ng karakter, ${charGuideline}`;
+
+        const len = features.length;
+        const lenGuideline = len >= 12 ? `sumusunod sa 12-karakter na gabay.` : `mababa sa 12-karakter na gabay.`;
+        const lengthSentence = `Ang haba nitong ${len} na karakter ay ${lenGuideline}`;
+
+        let conclusion = "";
+        if (level === "CRITICAL") {
+            conclusion = "Ang salitang diksyonaryo at mababang baryasyon ay nagbunga ng CRITICAL na antas ng panganib.";
+        } else if (level === "HIGH") {
+            conclusion = "Ang madaling makilalang salita at hulaang pattern ay nagbunga ng HIGH na antas ng panganib.";
+        } else if (level === "MODERATE" && vulnerabilityType === "BRUTE-FORCE") {
+            conclusion = "May natukoy na rule-based pattern, ngunit ang desisyon ay patungo sa BRUTE-FORCE at MODERATE na antas ng panganib.";
+        } else {
+            conclusion = `Ang mga katangiang ito ay sumusuporta sa ${level} na antas ng panganib.`;
+        }
+
+        return `Sinuri ng system ang lahat ng 14 na katangian. ${detectionSentence} ${charSentence} ${lengthSentence} ${conclusion}`;
+    }
+
+    // Default English rationale
     const detected = [];
     const notDetected = [];
 
@@ -488,57 +547,65 @@ function buildRiskModelRationale(features, level, vulnerabilityType) {
     const presentClasses = [];
     const missingClasses = [];
 
-    if (features.has_lowercase) presentClasses.push("lowercase letters"); else missingClasses.push("uppercase letters, numbers, or symbols");
-    if (features.has_uppercase) presentClasses.push("uppercase letters");
+    if (features.has_lowercase) presentClasses.push("lowercase"); else missingClasses.push("uppercase, numbers, or symbols");
+    if (features.has_uppercase) presentClasses.push("uppercase");
     if (features.has_digit) presentClasses.push("digits");
     if (features.has_symbol) presentClasses.push("symbols");
 
     let charSentence = "";
     const charCount = features.character_class_count;
     const charGuideline = charCount >= 3 
-        ? "which meets the system guideline." 
-        : "which is below the system guideline of 3.";
+        ? "meets the guideline." 
+        : "below the 3-type guideline";
 
     if (charCount === 1) {
-        charSentence = `and the password contains ${presentClasses.join(", ")} but no ${missingClasses.join(", ")}, resulting in only 1 character type, ${charGuideline}`;
+        charSentence = `and has ${presentClasses.join(", ")} but lacks ${missingClasses.join(", ")}, resulting in 1 type, ${charGuideline}`;
     } else {
-        charSentence = `and the password contains ${presentClasses.join(", ")}, giving it ${charCount} character types, ${charGuideline}`;
+        charSentence = `and has ${presentClasses.join(", ")}, giving it ${charCount} types, ${charGuideline}`;
     }
 
     const len = features.length;
     const lenGuideline = len >= 12 
         ? `meets the 12-character guideline.` 
-        : `is below the system guideline of at least 12 characters.`;
-    const lengthSentence = `Its length of ${len} characters ${lenGuideline}`;
+        : `is below the 12-character guideline`;
+    const lengthSentence = `Its ${len}-character length ${lenGuideline}`;
 
     let conclusion = "";
     if (level === "CRITICAL") {
-        conclusion = "but the combination of the detected dictionary word and limited character variety led the trained model to classify it as CRITICAL risk.";
+        conclusion = "Dictionary word and low variety led to CRITICAL risk.";
     } else if (level === "HIGH") {
-        conclusion = "However, the combination of a recognizable word and predictable modification patterns led the trained model to classify it as HIGH risk.";
+        conclusion = "Recognizable word and predictable patterns led to HIGH risk.";
     } else if (level === "MODERATE" && vulnerabilityType === "BRUTE-FORCE") {
-        conclusion = `Although a rule-based pattern was detected, the overall combination of extracted features and the decision path of the trained model resulted in the BRUTE-FORCE classification and a MODERATE risk rating.`;
+        conclusion = `A rule-based pattern was detected, but the decision path led to BRUTE-FORCE and MODERATE risk.`;
     } else {
-        conclusion = `Combined, these feature checks support the trained risk model's final rating of ${level} risk.`;
+        conclusion = `These features support the ${level} risk rating.`;
     }
 
-    return `The system examined all 14 extracted password features. ${detectionSentence} ${charSentence} ${lengthSentence} ${conclusion}`;
+    return `The system examined all 14 features. ${detectionSentence} ${charSentence} ${lengthSentence} ${conclusion}`;
 }
 
-function explainRisk(features, level, treeRoot, vulnerabilityType) {
+function explainRisk(features, level, treeRoot, vulnerabilityType, lang = 'en') {
     const contributions = [];
 
-    contributions.push(`+${features.length} points from password length (${features.length} characters).`);
-    contributions.push(`+${features.character_class_count * 10} points from using ${features.character_class_count} character class${features.character_class_count === 1 ? "" : "es"} (lowercase/uppercase/digits/symbols).`);
-
-    if (features.dictionary_present) contributions.push("-20 points: a dictionary word was detected.");
-    if (features.rule_pattern_present) contributions.push("-15 points: a predictable rule-based pattern was detected (leetspeak, numeric suffix, sequence, or repetition).");
-    if (features.has_sequence) contributions.push("-10 points: a sequential pattern (e.g. abc, 123) was detected.");
-    if (features.has_repetition) contributions.push("-10 points: repeated characters were detected.");
+    if (lang === 'tl') {
+        contributions.push(`+${features.length} puntos mula sa haba ng password (${features.length} na karakter).`);
+        contributions.push(`+${features.character_class_count * 10} puntos mula sa paggamit ng ${features.character_class_count} uri ng karakter (maliit/malaking titik, numero, simbolo).`);
+        if (features.dictionary_present) contributions.push("-20 puntos: may natukoy na salita mula sa diksyonaryo.");
+        if (features.rule_pattern_present) contributions.push("-15 puntos: may natukoy na hulaang pattern (leetspeak, numero sa dulo, sequence, o inulit na karakter).");
+        if (features.has_sequence) contributions.push("-10 puntos: may natukoy na sunod-sunod na pattern (hal. abc, 123).");
+        if (features.has_repetition) contributions.push("-10 puntos: may natukoy na mga inulit na karakter.");
+    } else {
+        contributions.push(`+${features.length} points from password length (${features.length} characters).`);
+        contributions.push(`+${features.character_class_count * 10} points from using ${features.character_class_count} character class${features.character_class_count === 1 ? "" : "es"} (lowercase/uppercase/digits/symbols).`);
+        if (features.dictionary_present) contributions.push("-20 points: a dictionary word was detected.");
+        if (features.rule_pattern_present) contributions.push("-15 points: a predictable rule-based pattern was detected (leetspeak, numeric suffix, sequence, or repetition).");
+        if (features.has_sequence) contributions.push("-10 points: a sequential pattern (e.g. abc, 123) was detected.");
+        if (features.has_repetition) contributions.push("-10 points: repeated characters were detected.");
+    }
 
     const score = calculateSecurityScore(features);
-    const modelSteps = buildManualFeatureSteps(features);
-    const summary = buildRiskModelRationale(features, level, vulnerabilityType);
+    const modelSteps = buildManualFeatureSteps(features, lang);
+    const summary = buildRiskModelRationale(features, level, vulnerabilityType, lang);
 
     return {
         risk_level: level,
@@ -636,76 +703,69 @@ function pickVariant(variants) {
 }
 
 const RECOMMENDATION_LABEL_TEMPLATES = {
-    AVOID_DICTIONARY_WORDS: (f, password) => {
-        const passphrase = suggestPassphrase();
-        const stacked = [];
-        if (f.has_leetspeak) stacked.push("substituting letters with symbols");
-        if (f.numeric_suffix) stacked.push("adding a number at the end");
-        const stackedNote = stacked.length > 0
-            ? ` Even with ${stacked.join(" and ")}, automated guessing tools can still easily recognize the main word underneath.`
-            : "";
-
-        return pickVariant([
-            `A passphrase like "${passphrase}" - made from unrelated words - creates a much less predictable password.`,
-           
-            `Consider replacing it with something like "${passphrase}" - combining unrelated words creates a stronger structure.`,
-        
-            `Consider a multi-word passphrase such as "${passphrase}" - using unrelated words creates a longer and harder-to-guess password.`
-        ]);
+    en: {
+        AVOID_DICTIONARY_WORDS: (f, password) => {
+            const passphrase = suggestPassphrase();
+            return pickVariant([
+                `Try "${passphrase}" for better unpredictability`,
+                `Try "${passphrase}" for a stronger structure.`,
+                `Try "${passphrase}" for a harder-to-guess password.`
+            ]);
+        },
+        AVOID_PREDICTABLE_PATTERNS: (f, password) => {
+            return pickVariant([
+                `Mix numbers, symbols, and letters throughout the password`,
+                `Mix numbers and symbols instead of only adding them at the ends.`,
+                `Use a random combination instead of modifying a basic word.`
+            ]);
+        },
+        ADD_CHARACTER_VARIETY: (f, password) => {
+            const target = MANUAL_TREE_THRESHOLDS.character_class_count;
+            return pickVariant([
+                `Use at least ${target} character types for more variety`,
+                `Adding missing types makes guessing harder.`,
+                `Combine at least ${target} types for more variety.`
+            ]);
+        },
+        INCREASE_LENGTH: (f, password) => {
+            return pickVariant([
+                `Adding characters increases the effort needed to guess it.`,
+                `Make it longer to increase possible combinations.`,
+                `Add a random word or phrase, avoiding obvious choices.`
+            ]);
+        }
     },
-
-    AVOID_PREDICTABLE_PATTERNS: (f, password) => {
-        const found = [];
-        if (f.has_leetspeak) found.push("swapping letters for symbols (like a→@)");
-        if (f.numeric_suffix) found.push("adding a number at the end");
-        if (f.has_sequence) found.push("using a sequence like 123 or abc");
-        if (f.has_repetition) found.push("repeating characters");
-        const whatWasFound = found.length > 0 ? found.join(", ") : "a common modification pattern";
-
-        return pickVariant([
-            `Consider changing the arrangement of your numbers, symbols, and letters instead of placing them only at the beginning or end.`,
-
-            `Try mixing numbers and symbols into different parts of the password instead of putting them only at the ends.`,
-           
-            `Consider creating a completely random combination rather than just adding extra characters to a basic word.`
-        ]);
-    },
-
-    ADD_CHARACTER_VARIETY: (f, password) => {
-        const target = MANUAL_TREE_THRESHOLDS.character_class_count;
-
-        const missing = [];
-        if (!f.has_uppercase) missing.push("uppercase letters");
-        if (!f.has_lowercase) missing.push("lowercase letters");
-        if (!f.has_digit) missing.push("numbers");
-        if (!f.has_symbol) missing.push("symbols");
-        const missingNote = missing.length > 0
-            ? ` Right now it's missing: ${missing.join(", ")}.`
-            : "";
-
-        return pickVariant([
-            `Consider using at least ${target} types (uppercase, lowercase, numbers, and symbols) to create more variety and make it harder to guess.`,
-           
-            `Adding the missing character types creates many more possibilities, making automated guessing much harder.`,
-           
-            `Consider combining at least ${target} types to create a more varied and less predictable password.`
-        ]);
-    },
-
-    INCREASE_LENGTH: (f, password) => {
-        const target = MANUAL_TREE_THRESHOLDS.length;
-        const remaining = Math.max(0, target - f.length);
-        const remainingNote = remaining > 0
-            ? ` That's ${remaining} more character${remaining === 1 ? "" : "s"} to reach the ${target}-character recommendation used by the system.`
-            : ` It already meets the ${target}-character recommendation, but extra length still makes it exponentially stronger.`;
-
-        return pickVariant([
-            `Adding more characters increases the time and effort required for automated tools to guess it.`,
-           
-            `Consider making it longer to increase the number of possible combinations.`,
-           
-            `Consider extending it by adding an extra random word or phrase, avoiding simple or obvious additions.`
-        ]);
+    tl: {
+        AVOID_DICTIONARY_WORDS: (f, password) => {
+            const passphrase = suggestPassphrase();
+            return pickVariant([
+                `Subukan ang "${passphrase}" para sa mas hindi mahulaang password.`,
+                `Gumamit ng tulad ng "${passphrase}" para sa mas matibay na istraktura.`,
+                `Subukan ang "${passphrase}" upang mas maging ligtas sa paghula.`
+            ]);
+        },
+        AVOID_PREDICTABLE_PATTERNS: (f, password) => {
+            return pickVariant([
+                `Paghaluin ang mga numero, simbolo, at titik sa buong password.`,
+                `Maglagay ng simbolo at numero sa gitna, hindi lamang sa dulo.`,
+                `Gumamit ng random na kombinasyon sa halip na palitan lang ang ilang titik ng salita.`
+            ]);
+        },
+        ADD_CHARACTER_VARIETY: (f, password) => {
+            const target = MANUAL_TREE_THRESHOLDS.character_class_count;
+            return pickVariant([
+                `Gumamit ng hindi bababa sa ${target} uri ng karakter para sa mas maraming baryasyon.`,
+                `Ang pagdaragdag ng kulang na uri ng karakter ay nagpapahirap sa paghula.`,
+                `Pagsamahin ang hindi bababa sa ${target} na uri ng karakter.`
+            ]);
+        },
+        INCREASE_LENGTH: (f, password) => {
+            return pickVariant([
+                `Ang pagpaphaba ng password ay nagpapadami sa kinakailangang oras upang hulaan ito.`,
+                `Pahabain pa ito para mas dumami ang posibleng kombinasyon.`,
+                `Magdagdag ng iba pang salita o parirala upang maging mas mahaba.`
+            ]);
+        }
     }
 };
 
@@ -732,27 +792,47 @@ function suggestPassphrase() {
     return `${capitalized.join('-')}-${randomNumber}${randomSymbol}`;
 }
 
-function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot, classificationRationale, recommendationResult) {
+function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot, classificationRationale, recommendationResult, lang = 'en') {
     let tips = [];
-    
     let attackVectorText = "";
+    const templates = RECOMMENDATION_LABEL_TEMPLATES[lang] || RECOMMENDATION_LABEL_TEMPLATES['en'];
 
-    if (vulnerabilityType === "DICTIONARY") {
-        const word = extractedFeatures._matched_dictionary_word ? ` ("${extractedFeatures._matched_dictionary_word}")` : "";
-        attackVectorText = `Your password is built around a common dictionary word${word}. Automated tools easily test millions of these exact dictionary combinations per second.`;
-    } else if (vulnerabilityType === "RULE-BASED") {
-        const mods = [];
-        if (extractedFeatures.has_leetspeak) mods.push("substituted letters with symbols/numbers (like '@' or '0')");
-        if (extractedFeatures.numeric_suffix) mods.push("added a numeric suffix");
-        if (extractedFeatures.numeric_prefix) mods.push("added a numeric prefix");
-        if (extractedFeatures.numeric_infix) mods.push("included numbers in the middle");
-        
-        const modStr = mods.length > 0 ? ` Specifically, you ${mods.join(", and ")}.` : "";
-        attackVectorText = `Your password applies predictable tweaks to a base word.${modStr} Crackers use mutation engines to instantly test these exact transformation patterns.`;
-    } else if (vulnerabilityType === "BRUTE-FORCE") {
-        attackVectorText = `Your password contains no dictionary words and relies on random characters. However, its short length makes high-speed GPU guessing effective.`;
+    if (lang === 'tl') {
+        if (vulnerabilityType === "DICTIONARY") {
+            const word = extractedFeatures._matched_dictionary_word ? ` ("${extractedFeatures._matched_dictionary_word}")` : "";
+            attackVectorText = `Ang iyong password ay gumagamit ng karaniwang salita sa diksyonaryo${word}. Madaling masusubukan ng mga nakautomatikong tool ang mga ganitong kombinasyon.`;
+        } else if (vulnerabilityType === "RULE-BASED") {
+            const mods = [];
+            if (extractedFeatures.has_leetspeak) mods.push("pagpapalit ng titik at simbolo");
+            if (extractedFeatures.numeric_suffix) mods.push("numero sa dulo");
+            if (extractedFeatures.numeric_prefix) mods.push("numero sa simula");
+            if (extractedFeatures.numeric_infix) mods.push("numero sa gitna");
+            
+            const modStr = mods.length > 0 ? ` Gumamit ka ng ${mods.join(", at ")}.` : "";
+            attackVectorText = `Ang iyong password ay gumagamit ng mga pagbabagong madaling hulaan.${modStr}`;
+        } else if (vulnerabilityType === "BRUTE-FORCE") {
+            attackVectorText = `Walang salitang diksyonaryo, ngunit ito ay maikli.`;
+        } else {
+            attackVectorText = `Lalapat ang karaniwang antas ng panganib.`;
+        }
     } else {
-        attackVectorText = `Standard vulnerability characteristics apply.`;
+        if (vulnerabilityType === "DICTIONARY") {
+            const word = extractedFeatures._matched_dictionary_word ? ` ("${extractedFeatures._matched_dictionary_word}")` : "";
+            attackVectorText = `Your password uses a common dictionary word${word}. Automated tools can easily test dictionary combinations.`;
+        } else if (vulnerabilityType === "RULE-BASED") {
+            const mods = [];
+            if (extractedFeatures.has_leetspeak) mods.push("letter/symbol swaps");
+            if (extractedFeatures.numeric_suffix) mods.push("ending number");
+            if (extractedFeatures.numeric_prefix) mods.push("starting number");
+            if (extractedFeatures.numeric_infix) mods.push("middle numbers");
+            
+            const modStr = mods.length > 0 ? ` You ${mods.join(", and ")}.` : "";
+            attackVectorText = `Your password uses easy-to-guess changes.${modStr}`;
+        } else if (vulnerabilityType === "BRUTE-FORCE") {
+            attackVectorText = `No dictionary words, but it is short.`;
+        } else {
+            attackVectorText = `Standard risk applies.`;
+        }
     }
 
     let technicalBreakdown = {
@@ -761,97 +841,124 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
         remediation: ""
     };
 
-    const currentPassword = password;
-
-    if (vulnerabilityType === "DICTIONARY") {
-        technicalBreakdown.remediation = `Consider replacing it with a passphrase made from a few unrelated words to break up single-word guessing patterns.`;
-    } else if (vulnerabilityType === "RULE-BASED") {
-        technicalBreakdown.remediation = `Consider changing the predictable pattern by mixing symbols and numbers into different parts of the password, rather than placing them only at the start or end.`;
-    } else if (vulnerabilityType === "BRUTE-FORCE") {
-        technicalBreakdown.remediation = `Consider making it longer and using different types of characters to expand the overall combination pool.`;
+    if (lang === 'tl') {
+        if (vulnerabilityType === "DICTIONARY") {
+            technicalBreakdown.remediation = `Subukang gumamit ng mga salitang walang kaugnayan sa isa't isa.`;
+        } else if (vulnerabilityType === "RULE-BASED") {
+            technicalBreakdown.remediation = `Paghaluin ang mga simbolo at numero sa buong password.`;
+        } else if (vulnerabilityType === "BRUTE-FORCE") {
+            technicalBreakdown.remediation = `Pahabain pa ito at dagdagan ang iba't ibang uri ng karakter.`;
+        }
+        tips.push("I-enable ang Multi-Factor Authentication (MFA) para sa karagdagang proteksyon.");
+    } else {
+        if (vulnerabilityType === "DICTIONARY") {
+            technicalBreakdown.remediation = `Try unrelated words.`;
+        } else if (vulnerabilityType === "RULE-BASED") {
+            technicalBreakdown.remediation = `Mix symbols and numbers throughout.`;
+        } else if (vulnerabilityType === "BRUTE-FORCE") {
+            technicalBreakdown.remediation = `Make it longer with more character types.`;
+        }
+        tips.push("Enable MFA for extra protection.");
     }
 
-    tips.push("Enable MFA for extra protection.");
+    const currentPassword = password;
 
-    if (recommendationResult && recommendationResult.label && RECOMMENDATION_LABEL_TEMPLATES[recommendationResult.label]) {
-        tips.push(
-            RECOMMENDATION_LABEL_TEMPLATES[recommendationResult.label](extractedFeatures, currentPassword)
-        );
+    if (recommendationResult && recommendationResult.label && templates[recommendationResult.label]) {
+        tips.push(templates[recommendationResult.label](extractedFeatures, currentPassword));
     } else {
-        tips.push("Recommendation model is unavailable right now - run create_recommendation_dataset.js then train_recommendation_model.js to enable personalized tips.");
+        tips.push(lang === 'tl' ? "Hindi available ang recommendation model sa ngayon." : "Recommendation model is unavailable right now.");
     }
 
     if (recommendationResult && recommendationResult.label) {
         const secondLabel = pickSecondRecommendationLabel(extractedFeatures, recommendationResult.label);
-        if (secondLabel && RECOMMENDATION_LABEL_TEMPLATES[secondLabel]) {
-            tips.push(
-                "Additionally: " + RECOMMENDATION_LABEL_TEMPLATES[secondLabel](extractedFeatures, currentPassword)
-            );
+        if (secondLabel && templates[secondLabel]) {
+            const addStr = lang === 'tl' ? "Bukod dito: " : "Additionally: ";
+            tips.push(addStr + templates[secondLabel](extractedFeatures, currentPassword));
         } else {
-            tips.push("Consider using a password manager to create and store unique passwords for each account, helping you avoid reusing passwords.");
+            tips.push(lang === 'tl' ? "Gumamit ng password manager para sa mga natatanging password." : "Use a password manager for unique passwords.");
         }
     } else {
-        tips.push("Consider using a password manager to create and store unique passwords for each account, helping you avoid reusing passwords.");
+        tips.push(lang === 'tl' ? "Gumamit ng password manager para sa mga natatanging password." : "Use a password manager for unique passwords.");
     }
 
     if (recommendationResult && recommendationResult.label) {
         const similarGuesses = generateSimilarGuessablePasswords(currentPassword, extractedFeatures);
         if (similarGuesses.core) {
-            tips.push(
-                `Your password's structure is similar to common guessing patterns: starting with a base like '${similarGuesses.core}' and trying variations like '${similarGuesses.examples.join("', '")}'. Automated cracking tools test these exact variations.`
-            );
+            tips.push(lang === 'tl' ? `Ang iyong password ay sumusunod sa mga pattern ng '${similarGuesses.core}'.` : `Your password follows '${similarGuesses.core}' patterns.`);
         } else {
-            tips.push(
-                `Guessing software generates combinations that follow your password's structure (${extractedFeatures.length} characters using its current mix). Examples: '${similarGuesses.examples.join("', ")}'.`
-            );
+            tips.push(lang === 'tl' ? `${extractedFeatures.length}-karakter na password na may karaniwang pattern.` : `${extractedFeatures.length}-character password with common patterns.`);
         }
     } else {
-        tips.push("Guessing software can generate combinations based on password length and character variety.");
+        tips.push(lang === 'tl' ? "Gumagamit ang mga tool sa paghula ng haba at mga uri ng karakter." : "Guessing tools use length and character types.");
     }
 
     return { tips, technicalBreakdown };
 }
 
 const FEATURE_LABELS = {
-    length: "Length",
-    has_lowercase: "Has Lowercase",
-    has_uppercase: "Has Uppercase",
-    has_digit: "Has Digit",
-    has_symbol: "Has Symbol",
-    dictionary_present: "Dictionary Present",
-    has_leetspeak: "Has Leetspeak",
-    numeric_prefix: "Numeric Prefix",
-    numeric_suffix: "Numeric Suffix",
-    numeric_infix: "Numeric Substring / Infix",
-    has_sequence: "Has Sequence",
-    has_repetition: "Has Repetition",
-    character_class_count: "Character Class Count",
-    rule_pattern_present: "Rule Pattern Present"
+    en: {
+        length: "Length",
+        has_lowercase: "Has Lowercase",
+        has_uppercase: "Has Uppercase",
+        has_digit: "Has Digit",
+        has_symbol: "Has Symbol",
+        dictionary_present: "Dictionary Present",
+        has_leetspeak: "Has Leetspeak",
+        numeric_prefix: "Numeric Prefix",
+        numeric_suffix: "Numeric Suffix",
+        numeric_infix: "Numeric Substring / Infix",
+        has_sequence: "Has Sequence",
+        has_repetition: "Has Repetition",
+        character_class_count: "Character Class Count",
+        rule_pattern_present: "Rule Pattern Present"
+    },
+    tl: {
+        length: "Haba ng Password",
+        has_lowercase: "May Maliit na Titik (Lowercase)",
+        has_uppercase: "May Malaking Titik (Uppercase)",
+        has_digit: "May Numero (Digit)",
+        has_symbol: "May Simbolo (Symbol)",
+        dictionary_present: "May Salitang Diksyonaryo",
+        has_leetspeak: "May Leetspeak (Palit-simbolo)",
+        numeric_prefix: "Numero sa Simula (Prefix)",
+        numeric_suffix: "Numero sa Dulo (Suffix)",
+        numeric_infix: "Numero sa Gitna (Infix)",
+        has_sequence: "May Sunod-sunod na Pattern (Sequence)",
+        has_repetition: "May Inulit na Karakter",
+        character_class_count: "Dami ng Uri ng Karakter",
+        rule_pattern_present: "May Pattern Batay sa Alituntunin"
+    }
 };
 
 const FEATURE_COLUMNS = [
     {
         key: "length",
-        question: (t) => `Length >= ${Math.round(t)}?`,
-        explain: { YES: "Password length meets the standard requirement.", NO: "Password is too short." }
+        question: (t, lang = 'en') => lang === 'tl' ? `Haba >= ${Math.round(t)}?` : `Length >= ${Math.round(t)}?`,
+        explain: {
+            en: { YES: "Password length meets the standard requirement.", NO: "Password is too short." },
+            tl: { YES: "Sapat ang haba ng password ayon sa pamantayan.", NO: "Masyadong maikli ang password." }
+        }
     },
     {
         key: "character_class_count",
-        question: (t) => `Character Class Count >= ${Math.round(t)}?`,
-        explain: { YES: "Sufficient variety of character types.", NO: "Insufficient variety of character types." }
+        question: (t, lang = 'en') => lang === 'tl' ? `Dami ng Uri ng Karakter >= ${Math.round(t)}?` : `Character Class Count >= ${Math.round(t)}?`,
+        explain: {
+            en: { YES: "Sufficient variety of character types.", NO: "Insufficient variety of character types." },
+            tl: { YES: "Sapat ang iba't ibang uri ng karakter.", NO: "Kulang sa baryasyon ng uri ng karakter." }
+        }
     },
-    { key: "has_lowercase", question: () => "Lowercase Letters", explain: { YES: "Contains lowercase letters.", NO: "No lowercase letters." } },
-    { key: "has_uppercase", question: () => "Uppercase Letters", explain: { YES: "Contains uppercase letters.", NO: "No uppercase letters." } },
-    { key: "has_digit", question: () => "Digits", explain: { YES: "Contains digits.", NO: "No digits." } },
-    { key: "has_symbol", question: () => "Symbols", explain: { YES: "Contains symbols.", NO: "No symbols." } },
-    { key: "dictionary_present", question: () => "Dictionary Word", branchLabels: ["Present", "Not Present"], explain: { YES: "Dictionary word detected.", NO: "No dictionary word detected." } },
-    { key: "has_leetspeak", question: () => "Leetspeak", explain: { YES: "Leetspeak pattern detected.", NO: "No leetspeak pattern detected." } },
-    { key: "numeric_prefix", question: () => "Numeric Prefix", explain: { YES: "Contains numbers at the beginning (prefix).", NO: "No numbers at the beginning." } },
-    { key: "numeric_suffix", question: () => "Numeric Suffix", explain: { YES: "Contains numbers at the end (suffix).", NO: "No numbers at the end." } },
-    { key: "numeric_infix", question: () => "Numeric Substring / Infix", explain: { YES: "Contains numbers in the middle (infix).", NO: "No numbers in the middle." } },
-    { key: "has_sequence", question: () => "Sequential Pattern", explain: { YES: "Contains sequential patterns (e.g., 123, abc).", NO: "No sequential patterns." } },
-    { key: "has_repetition", question: () => "Repetition Pattern", explain: { YES: "Contains repeated characters.", NO: "No repeated characters." } },
-    { key: "rule_pattern_present", question: () => "Rule-Based Pattern", explain: { YES: "Rule-based pattern detected.", NO: "No rule-based pattern detected." } }
+    { key: "has_lowercase", question: (t, lang = 'en') => lang === 'tl' ? "Maliit na Titik" : "Lowercase Letters", explain: { en: { YES: "Contains lowercase letters.", NO: "No lowercase letters." }, tl: { YES: "Naglalaman ng maliliit na titik.", NO: "Walang maliliit na titik." } } },
+    { key: "has_uppercase", question: (t, lang = 'en') => lang === 'tl' ? "Malaking Titik" : "Uppercase Letters", explain: { en: { YES: "Contains uppercase letters.", NO: "No uppercase letters." }, tl: { YES: "Naglalaman ng malalaking titik.", NO: "Walang malalaking titik." } } },
+    { key: "has_digit", question: (t, lang = 'en') => lang === 'tl' ? "Mga Numero" : "Digits", explain: { en: { YES: "Contains digits.", NO: "No digits." }, tl: { YES: "Naglalaman ng mga numero.", NO: "Walang mga numero." } } },
+    { key: "has_symbol", question: (t, lang = 'en') => lang === 'tl' ? "Mga Simbolo" : "Symbols", explain: { en: { YES: "Contains symbols.", NO: "No symbols." }, tl: { YES: "Naglalaman ng mga simbolo.", NO: "Walang mga simbolo." } } },
+    { key: "dictionary_present", question: (t, lang = 'en') => lang === 'tl' ? "Salitang Diksyonaryo" : "Dictionary Word", branchLabels: { en: ["Present", "Not Present"], tl: ["Mayroon", "Wala"] }, explain: { en: { YES: "Dictionary word detected.", NO: "No dictionary word detected." }, tl: { YES: "May natukoy na salita mula sa diksyonaryo.", NO: "Walang natukoy na salita mula sa diksyonaryo." } } },
+    { key: "has_leetspeak", question: (t, lang = 'en') => lang === 'tl' ? "Leetspeak Pattern" : "Leetspeak", explain: { en: { YES: "Leetspeak pattern detected.", NO: "No leetspeak pattern detected." }, tl: { YES: "May natukoy na leetspeak pattern.", NO: "Walang natukoy na leetspeak pattern." } } },
+    { key: "numeric_prefix", question: (t, lang = 'en') => lang === 'tl' ? "Numero sa Simula" : "Numeric Prefix", explain: { en: { YES: "Contains numbers at the beginning (prefix).", NO: "No numbers at the beginning." }, tl: { YES: "May numero sa simula.", NO: "Walang numero sa simula." } } },
+    { key: "numeric_suffix", question: (t, lang = 'en') => lang === 'tl' ? "Numero sa Dulo" : "Numeric Suffix", explain: { en: { YES: "Contains numbers at the end (suffix).", NO: "No numbers at the end." }, tl: { YES: "May numero sa dulo.", NO: "Walang numero sa dulo." } } },
+    { key: "numeric_infix", question: (t, lang = 'en') => lang === 'tl' ? "Numero sa Gitna" : "Numeric Substring / Infix", explain: { en: { YES: "Contains numbers in the middle (infix).", NO: "No numbers in the middle." }, tl: { YES: "May numero sa gitna.", NO: "Walang numero sa gitna." } } },
+    { key: "has_sequence", question: (t, lang = 'en') => lang === 'tl' ? "Sunod-sunod na Pattern" : "Sequential Pattern", explain: { en: { YES: "Contains sequential patterns (e.g., 123, abc).", NO: "No sequential patterns." }, tl: { YES: "May sunod-sunod na pattern (hal. 123, abc).", NO: "Walang sunod-sunod na pattern." } } },
+    { key: "has_repetition", question: (t, lang = 'en') => lang === 'tl' ? "Inulit na Karakter" : "Repetition Pattern", explain: { en: { YES: "Contains repeated characters.", NO: "No repeated characters." }, tl: { YES: "May mga inulit na karakter.", NO: "Walang inulit na karakter." } } },
+    { key: "rule_pattern_present", question: (t, lang = 'en') => lang === 'tl' ? "Rule-Based Pattern" : "Rule-Based Pattern", explain: { en: { YES: "Rule-based pattern detected.", NO: "No rule-based pattern detected." }, tl: { YES: "May natukoy na rule-based pattern.", NO: "Walang natukoy na rule-based pattern." } } }
 ];
 
 const DECISION_TREE_ORDER = [
@@ -876,37 +983,51 @@ const AGGREGATE_FEATURE_BREAKDOWN = {
     rule_pattern_present: ["has_leetspeak", "numeric_suffix", "has_sequence", "has_repetition"]
 };
 
-function buildAggregateBreakdown(featureKey, extractedFeatures) {
+function buildAggregateBreakdown(featureKey, extractedFeatures, lang = 'en') {
     const subKeys = AGGREGATE_FEATURE_BREAKDOWN[featureKey];
     if (!subKeys) return null;
+
+    const labels = FEATURE_LABELS[lang] || FEATURE_LABELS['en'];
 
     return subKeys.map((subKey) => {
         const meta = FEATURE_COLUMNS.find((f) => f.key === subKey);
         const present = extractedFeatures[subKey] === 1;
+        const expObj = meta ? (meta.explain[lang] || meta.explain['en']) : null;
+
         return {
             feature: subKey,
-            label: FEATURE_LABELS[subKey],
+            label: labels[subKey],
             present: present,
-            explanation: meta ? (present ? meta.explain.YES : meta.explain.NO) : ""
+            explanation: expObj ? (present ? expObj.YES : expObj.NO) : ""
         };
     });
 }
 
-function explainClassification(extractedFeatures, vulnerabilityType) {
-    const LABELS = FEATURE_LABELS;
+function explainClassification(extractedFeatures, vulnerabilityType, lang = 'en') {
+    const LABELS = FEATURE_LABELS[lang] || FEATURE_LABELS['en'];
     const NUMERIC_KEYS = new Set(["length", "character_class_count"]);
 
     const feature_checklist = FEATURE_COLUMNS.map((meta) => {
         const value = extractedFeatures[meta.key];
+        const expObj = meta.explain[lang] || meta.explain['en'];
 
         if (NUMERIC_KEYS.has(meta.key)) {
+            let exp = "";
+            if (lang === 'tl') {
+                exp = meta.key === "length"
+                    ? `Ang haba ng password ay ${value} na karakter.`
+                    : `Gumagamit ang password ng ${value} uri ng karakter (mula sa 4 na posibleng uri: maliit na titik, malaking titik, numero, simbolo).`;
+            } else {
+                exp = meta.key === "length"
+                    ? `Password length is ${value} character${value === 1 ? "" : "s"}.`
+                    : `Password uses ${value} character class${value === 1 ? "" : "es"} (out of 4 possible: lowercase, uppercase, digit, symbol).`;
+            }
+
             return {
                 feature: meta.key,
                 label: LABELS[meta.key],
                 value: value,
-                explanation: meta.key === "length"
-                    ? `Password length is ${value} character${value === 1 ? "" : "s"}.`
-                    : `Password uses ${value} character class${value === 1 ? "" : "es"} (out of 4 possible: lowercase, uppercase, digit, symbol).`
+                explanation: exp
             };
         }
 
@@ -915,26 +1036,38 @@ function explainClassification(extractedFeatures, vulnerabilityType) {
             feature: meta.key,
             label: LABELS[meta.key],
             value: present,
-            explanation: present ? meta.explain.YES : meta.explain.NO
+            explanation: present ? expObj.YES : expObj.NO
         };
     });
 
     let classification_rationale;
 
-    if (vulnerabilityType === "DICTIONARY") {
-        classification_rationale = `The model classified this password as DICTIONARY because it relies heavily on recognizable vocabulary, making it vulnerable to automated wordlist attacks.`;
-    } else if (vulnerabilityType === "RULE-BASED") {
-        classification_rationale = `The model detected structural text changes like leetspeak substitutions, bypassing pure dictionary lookup and triggering the Rule-Based node.`;
-    } else if (vulnerabilityType === "BRUTE-FORCE") {
-        classification_rationale = `The model classified this password as BRUTE-FORCE because it contains no dictionary words, leaving security entirely dependent on length and character variety.`;
+    if (lang === 'tl') {
+        if (vulnerabilityType === "DICTIONARY") {
+            classification_rationale = `Na-classify bilang DICTIONARY dahil sa mga natukoy na kilalang salita.`;
+        } else if (vulnerabilityType === "RULE-BASED") {
+            classification_rationale = `Ang mga pagbabagong leetspeak/pattern ang nag-trigger sa Rule-Based node.`;
+        } else if (vulnerabilityType === "BRUTE-FORCE") {
+            classification_rationale = `Na-classify bilang BRUTE-FORCE dahil walang nahanap na salitang diksyonaryo.`;
+        } else {
+            classification_rationale = `Resulta ng classification: ${vulnerabilityType}.`;
+        }
     } else {
-        classification_rationale = `Classification result: ${vulnerabilityType}.`;
+        if (vulnerabilityType === "DICTIONARY") {
+            classification_rationale = `Classified as DICTIONARY due to recognizable words`;
+        } else if (vulnerabilityType === "RULE-BASED") {
+            classification_rationale = `Leetspeak changes triggered the Rule-Based node.`;
+        } else if (vulnerabilityType === "BRUTE-FORCE") {
+            classification_rationale = `Classified as BRUTE-FORCE due to no dictionary words.`;
+        } else {
+            classification_rationale = `Classification result: ${vulnerabilityType}.`;
+        }
     }
 
     return { feature_checklist, classification_rationale };
 }
 
-function buildManualDecisionPath(extractedFeatures, finalLabel) {
+function buildManualDecisionPath(extractedFeatures, finalLabel, lang = 'en') {
     function leaf(label) {
         return {
             name: label,
@@ -947,10 +1080,10 @@ function buildManualDecisionPath(extractedFeatures, finalLabel) {
 
     function previewNode(nextMeta) {
         if (!nextMeta) {
-            return { name: "Result", type: "preview", on_path: false, children: [] };
+            return { name: lang === 'tl' ? "Resulta" : "Result", type: "preview", on_path: false, children: [] };
         }
         return {
-            name: nextMeta.question(MANUAL_TREE_THRESHOLDS[nextMeta.key] ?? 1),
+            name: nextMeta.question(MANUAL_TREE_THRESHOLDS[nextMeta.key] ?? 1, lang),
             type: "preview",
             feature: nextMeta.key,
             on_path: false,
@@ -960,16 +1093,18 @@ function buildManualDecisionPath(extractedFeatures, finalLabel) {
 
     function decisionNode(meta, answer, breakdown, nextChild, nextMeta) {
         const threshold = MANUAL_TREE_THRESHOLDS[meta.key] ?? 1;
-        const [yesLabel, noLabel] = meta.branchLabels || ["Yes", "No"];
+        const bObj = meta.branchLabels ? (meta.branchLabels[lang] || meta.branchLabels['en']) : null;
+        const [yesLabel, noLabel] = bObj || (lang === 'tl' ? ["Oo", "Hindi"] : ["Yes", "No"]);
         const preview = previewNode(nextMeta);
+        const expObj = meta.explain[lang] || meta.explain['en'];
 
         return {
-            name: meta.question(threshold),
+            name: meta.question(threshold, lang),
             type: "decision",
             feature: meta.key,
             value: answer === "YES" ? 1 : 0,
             decision: answer,
-            explanation: { YES: meta.explain.YES, NO: meta.explain.NO },
+            explanation: { YES: expObj.YES, NO: expObj.NO },
             breakdown: breakdown || null,
             on_path: true,
             children: [
@@ -977,14 +1112,14 @@ function buildManualDecisionPath(extractedFeatures, finalLabel) {
                     name: yesLabel,
                     branch: "YES",
                     taken: answer === "YES",
-                    explanation: meta.explain.YES,
+                    explanation: expObj.YES,
                     children: [answer === "YES" ? nextChild : preview]
                 },
                 {
                     name: noLabel,
                     branch: "NO",
                     taken: answer === "NO",
-                    explanation: meta.explain.NO,
+                    explanation: expObj.NO,
                     children: [answer === "NO" ? nextChild : preview]
                 }
             ]
@@ -1001,7 +1136,7 @@ function buildManualDecisionPath(extractedFeatures, finalLabel) {
         const threshold = MANUAL_TREE_THRESHOLDS[meta.key] ?? 1;
         const actualValue = extractedFeatures[meta.key];
         const answer = actualValue >= threshold ? "YES" : "NO";
-        const breakdown = buildAggregateBreakdown(meta.key, extractedFeatures);
+        const breakdown = buildAggregateBreakdown(meta.key, extractedFeatures, lang);
         node = decisionNode(meta, answer, breakdown, node, nextMeta);
         nextMeta = meta;
     }
@@ -1011,11 +1146,16 @@ function buildManualDecisionPath(extractedFeatures, finalLabel) {
 
 // ===== API ROUTE =====
 app.post('/analyze', (req, res) => {
-    const { password, previousPassword } = req.body;
+    const { password, previousPassword, lang } = req.body;
+
+    const selectedLang = lang === 'tl' ? 'tl' : 'en';
 
     if (!password) {
-        return res.status(400).json({ error: "Password is required" });
+        return res.status(400).json({ 
+            error: selectedLang === 'tl' ? "Kailangan ang password" : "Password is required" 
+        });
     }
+
     const extractedFeatures = extractFeatures(password);
     console.log("FEATURES:", extractedFeatures);
 
@@ -1049,14 +1189,17 @@ app.post('/analyze', (req, res) => {
                 status: "IDENTICAL",
                 current_score: identicalScore,
                 previous_score: identicalScore,
-                message: "Your current password is identical to your previous password, so they share the exact same security characteristics."
+                message: selectedLang === 'tl' 
+                    ? "Ang kasalukuyan mong password ay katulad mismo ng nakaraang password, kaya magkatulad ang kanilang mga katangiang pangkapanatagan."
+                    : "Your current password is identical to your previous password, so they share the exact same security characteristics."
             };
         } else {
             comparisonResult = comparePasswords(
                 extractedFeatures,
                 previousFeatures,
                 currentRiskLevel,
-                previousRiskLevel
+                previousRiskLevel,
+                selectedLang
             );
         }
 
@@ -1064,16 +1207,16 @@ app.post('/analyze', (req, res) => {
         console.log("COMPARISON:", comparisonResult);
     }
 
-    const classificationResult = classifyPassword(extractedFeatures);
-    const riskExplanation = explainRisk(extractedFeatures, currentRiskLevel, riskModel ? riskModel.root : null, classificationResult.label);
+    const classificationResult = classifyPassword(extractedFeatures, selectedLang);
+    const riskExplanation = explainRisk(extractedFeatures, currentRiskLevel, riskModel ? riskModel.root : null, classificationResult.label, selectedLang);
 
     console.log("RAW PREDICTION (RISK):", riskClassifier ? riskClassifier.predict(modelFeatures) : "N/A");
     console.log("RISK:", currentRiskLevel);
 
-    const recommendationResult = classifyRecommendation(extractedFeatures);
+    const recommendationResult = classifyRecommendation(extractedFeatures, selectedLang);
     console.log("RECOMMENDATION:", recommendationResult.label);
 
-    const fullClassificationExplanation = explainClassification(extractedFeatures, classificationResult.label);
+    const fullClassificationExplanation = explainClassification(extractedFeatures, classificationResult.label, selectedLang);
 
     const { tips, technicalBreakdown } = getStrategies(
         classificationResult.label,
@@ -1081,14 +1224,18 @@ app.post('/analyze', (req, res) => {
         password,
         model.root,
         fullClassificationExplanation.classification_rationale,
-        recommendationResult
+        recommendationResult,
+        selectedLang
     );
 
-    const actualModelDecisionPath = buildManualDecisionPath(extractedFeatures, classificationResult.label);
+    const actualModelDecisionPath = buildManualDecisionPath(extractedFeatures, classificationResult.label, selectedLang);
     const entropyBits = Math.round(password.length * Math.log2(extractedFeatures.character_class_count * 22 || 26));
 
     console.log("PASSWORD:", password);
     console.log("RESULT:", classificationResult);
+
+    const yesStr = selectedLang === 'tl' ? "Oo" : "Yes";
+    const noStr = selectedLang === 'tl' ? "Hindi" : "No";
 
     res.json({
         password: password,
@@ -1101,8 +1248,8 @@ app.post('/analyze', (req, res) => {
             password_length: extractedFeatures.length,
             character_classes_used: extractedFeatures.character_class_count,
             estimated_entropy_bits: entropyBits,
-            dictionary_found: extractedFeatures.dictionary_present === 1 ? "Yes" : "No",
-            rule_pattern_active: extractedFeatures.rule_pattern_present === 1 ? "Yes" : "No"
+            dictionary_found: extractedFeatures.dictionary_present === 1 ? yesStr : noStr,
+            rule_pattern_active: extractedFeatures.rule_pattern_present === 1 ? yesStr : noStr
         },
         risk_level: currentRiskLevel,
         risk_assessment: riskExplanation,
