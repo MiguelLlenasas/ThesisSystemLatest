@@ -1,3 +1,4 @@
+fetch("https://thesissystemlatest.onrender.com/analyze", { method: "HEAD" }).catch(() => {});
 console.log("Comparison JS Connected");
 
 function getComparisonElements() {
@@ -353,7 +354,7 @@ async function loadComparisonFromBackend() {
 
     try {
         const response = await fetch(
-            "http://localhost:3000/analyze",
+            "https://thesissystemlatest.onrender.com/analyze",
             {
                 method: "POST",
                 headers: {
@@ -384,7 +385,7 @@ async function loadComparisonFromBackend() {
 
         if (!previousData) {
             const previousResponse = await fetch(
-                "http://localhost:3000/analyze",
+                "https://thesissystemlatest.onrender.com/analyze",
                 {
                     method: "POST",
                     headers: {

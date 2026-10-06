@@ -488,41 +488,41 @@ function buildRiskModelRationale(features, level, vulnerabilityType) {
     const presentClasses = [];
     const missingClasses = [];
 
-    if (features.has_lowercase) presentClasses.push("lowercase letters"); else missingClasses.push("uppercase letters, numbers, or symbols");
-    if (features.has_uppercase) presentClasses.push("uppercase letters");
+    if (features.has_lowercase) presentClasses.push("lowercase"); else missingClasses.push("uppercase, numbers, or symbols");
+    if (features.has_uppercase) presentClasses.push("uppercase");
     if (features.has_digit) presentClasses.push("digits");
     if (features.has_symbol) presentClasses.push("symbols");
 
     let charSentence = "";
     const charCount = features.character_class_count;
     const charGuideline = charCount >= 3 
-        ? "which meets the system guideline." 
-        : "which is below the system guideline of 3.";
+        ? "meets the guideline." 
+        : "below the 3-type guideline";
 
     if (charCount === 1) {
-        charSentence = `and the password contains ${presentClasses.join(", ")} but no ${missingClasses.join(", ")}, resulting in only 1 character type, ${charGuideline}`;
+        charSentence = `and has ${presentClasses.join(", ")} but lacks ${missingClasses.join(", ")}, resulting in 1 type, ${charGuideline}`;
     } else {
-        charSentence = `and the password contains ${presentClasses.join(", ")}, giving it ${charCount} character types, ${charGuideline}`;
+        charSentence = `and has ${presentClasses.join(", ")}, giving it ${charCount} types, ${charGuideline}`;
     }
 
     const len = features.length;
     const lenGuideline = len >= 12 
         ? `meets the 12-character guideline.` 
-        : `is below the system guideline of at least 12 characters.`;
-    const lengthSentence = `Its length of ${len} characters ${lenGuideline}`;
+        : `is below the 12-character guideline`;
+    const lengthSentence = `Its ${len}-character length ${lenGuideline}`;
 
     let conclusion = "";
     if (level === "CRITICAL") {
-        conclusion = "but the combination of the detected dictionary word and limited character variety led the trained model to classify it as CRITICAL risk.";
+        conclusion = "Dictionary word and low variety led to CRITICAL risk.";
     } else if (level === "HIGH") {
-        conclusion = "However, the combination of a recognizable word and predictable modification patterns led the trained model to classify it as HIGH risk.";
+        conclusion = "Recognizable word and predictable patterns led to HIGH risk.";
     } else if (level === "MODERATE" && vulnerabilityType === "BRUTE-FORCE") {
-        conclusion = `Although a rule-based pattern was detected, the overall combination of extracted features and the decision path of the trained model resulted in the BRUTE-FORCE classification and a MODERATE risk rating.`;
+        conclusion = `A rule-based pattern was detected, but the decision path led to BRUTE-FORCE and MODERATE risk.`;
     } else {
-        conclusion = `Combined, these feature checks support the trained risk model's final rating of ${level} risk.`;
+        conclusion = `These features support the ${level} risk rating.`;
     }
 
-    return `The system examined all 14 extracted password features. ${detectionSentence} ${charSentence} ${lengthSentence} ${conclusion}`;
+    return `The system examined all 14 features. ${detectionSentence} ${charSentence} ${lengthSentence} ${conclusion}`;
 }
 
 function explainRisk(features, level, treeRoot, vulnerabilityType) {
@@ -639,35 +639,35 @@ const RECOMMENDATION_LABEL_TEMPLATES = {
     AVOID_DICTIONARY_WORDS: (f, password) => {
         const passphrase = suggestPassphrase();
         const stacked = [];
-        if (f.has_leetspeak) stacked.push("substituting letters with symbols");
-        if (f.numeric_suffix) stacked.push("adding a number at the end");
+        if (f.has_leetspeak) stacked.push("letter substitutions");
+        if (f.numeric_suffix) stacked.push("ending number");
         const stackedNote = stacked.length > 0
-            ? ` Even with ${stacked.join(" and ")}, automated guessing tools can still easily recognize the main word underneath.`
+            ? ` Even with ${stacked.join(" and ")}, the main word remains recognizable.`
             : "";
 
         return pickVariant([
-            `A passphrase like "${passphrase}" - made from unrelated words - creates a much less predictable password.`,
+            `Try "${passphrase}" for better unpredictability`,
            
-            `Consider replacing it with something like "${passphrase}" - combining unrelated words creates a stronger structure.`,
+            `Try "${passphrase}" for a stronger structure.`,
         
-            `Consider a multi-word passphrase such as "${passphrase}" - using unrelated words creates a longer and harder-to-guess password.`
+            `Try "${passphrase}" for a harder-to-guess password.`
         ]);
     },
 
     AVOID_PREDICTABLE_PATTERNS: (f, password) => {
         const found = [];
-        if (f.has_leetspeak) found.push("swapping letters for symbols (like a→@)");
-        if (f.numeric_suffix) found.push("adding a number at the end");
-        if (f.has_sequence) found.push("using a sequence like 123 or abc");
-        if (f.has_repetition) found.push("repeating characters");
-        const whatWasFound = found.length > 0 ? found.join(", ") : "a common modification pattern";
+        if (f.has_leetspeak) found.push("letter-symbol swaps");
+        if (f.numeric_suffix) found.push("ending number");
+        if (f.has_sequence) found.push("sequences");
+        if (f.has_repetition) found.push("repeated characters");
+        const whatWasFound = found.length > 0 ? found.join(", ") : "a common pattern";
 
         return pickVariant([
-            `Consider changing the arrangement of your numbers, symbols, and letters instead of placing them only at the beginning or end.`,
+            `Mix numbers, symbols, and letters throughout the password`,
 
-            `Try mixing numbers and symbols into different parts of the password instead of putting them only at the ends.`,
+            `Mix numbers and symbols instead of only adding them at the ends.`,
            
-            `Consider creating a completely random combination rather than just adding extra characters to a basic word.`
+            `Use a random combination instead of modifying a basic word.`
         ]);
     },
 
@@ -675,20 +675,20 @@ const RECOMMENDATION_LABEL_TEMPLATES = {
         const target = MANUAL_TREE_THRESHOLDS.character_class_count;
 
         const missing = [];
-        if (!f.has_uppercase) missing.push("uppercase letters");
-        if (!f.has_lowercase) missing.push("lowercase letters");
+        if (!f.has_uppercase) missing.push("uppercase");
+        if (!f.has_lowercase) missing.push("lowercase");
         if (!f.has_digit) missing.push("numbers");
         if (!f.has_symbol) missing.push("symbols");
         const missingNote = missing.length > 0
-            ? ` Right now it's missing: ${missing.join(", ")}.`
+            ? ` Missing: ${missing.join(", ")}.`
             : "";
 
         return pickVariant([
-            `Consider using at least ${target} types (uppercase, lowercase, numbers, and symbols) to create more variety and make it harder to guess.`,
+            `Use at least ${target} character types for more variety`,
            
-            `Adding the missing character types creates many more possibilities, making automated guessing much harder.`,
+            `Adding missing types makes guessing harder.`,
            
-            `Consider combining at least ${target} types to create a more varied and less predictable password.`
+            `Combine at least ${target} types for more variety.`
         ]);
     },
 
@@ -696,15 +696,15 @@ const RECOMMENDATION_LABEL_TEMPLATES = {
         const target = MANUAL_TREE_THRESHOLDS.length;
         const remaining = Math.max(0, target - f.length);
         const remainingNote = remaining > 0
-            ? ` That's ${remaining} more character${remaining === 1 ? "" : "s"} to reach the ${target}-character recommendation used by the system.`
-            : ` It already meets the ${target}-character recommendation, but extra length still makes it exponentially stronger.`;
+            ? ` Add ${remaining} more character${remaining === 1 ? "" : "s"} to reach ${target}.`
+            : ` It meets the ${target} characters, but more is stronger.`;
 
         return pickVariant([
-            `Adding more characters increases the time and effort required for automated tools to guess it.`,
+            `Adding characters increases the effort needed to guess it.`,
            
-            `Consider making it longer to increase the number of possible combinations.`,
+            `Make it longer to increase possible combinations.`,
            
-            `Consider extending it by adding an extra random word or phrase, avoiding simple or obvious additions.`
+            `Add a random word or phrase, avoiding obvious choices.`
         ]);
     }
 };
@@ -739,20 +739,20 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
 
     if (vulnerabilityType === "DICTIONARY") {
         const word = extractedFeatures._matched_dictionary_word ? ` ("${extractedFeatures._matched_dictionary_word}")` : "";
-        attackVectorText = `Your password is built around a common dictionary word${word}. Automated tools easily test millions of these exact dictionary combinations per second.`;
+        attackVectorText = `Your password uses a common dictionary word${word}. Automated tools can easily test dictionary combinations.`;
     } else if (vulnerabilityType === "RULE-BASED") {
         const mods = [];
-        if (extractedFeatures.has_leetspeak) mods.push("substituted letters with symbols/numbers (like '@' or '0')");
-        if (extractedFeatures.numeric_suffix) mods.push("added a numeric suffix");
-        if (extractedFeatures.numeric_prefix) mods.push("added a numeric prefix");
-        if (extractedFeatures.numeric_infix) mods.push("included numbers in the middle");
+        if (extractedFeatures.has_leetspeak) mods.push("letter/symbol swaps");
+        if (extractedFeatures.numeric_suffix) mods.push("ending number");
+        if (extractedFeatures.numeric_prefix) mods.push("starting number");
+        if (extractedFeatures.numeric_infix) mods.push("middle numbers");
         
-        const modStr = mods.length > 0 ? ` Specifically, you ${mods.join(", and ")}.` : "";
-        attackVectorText = `Your password applies predictable tweaks to a base word.${modStr} Crackers use mutation engines to instantly test these exact transformation patterns.`;
+        const modStr = mods.length > 0 ? ` You ${mods.join(", and ")}.` : "";
+        attackVectorText = `Your password uses easy-to-guess changes.${modStr}`;
     } else if (vulnerabilityType === "BRUTE-FORCE") {
-        attackVectorText = `Your password contains no dictionary words and relies on random characters. However, its short length makes high-speed GPU guessing effective.`;
+        attackVectorText = `No dictionary words, but it is short.`;
     } else {
-        attackVectorText = `Standard vulnerability characteristics apply.`;
+        attackVectorText = `Standard risk applies.`;
     }
 
     let technicalBreakdown = {
@@ -764,11 +764,11 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
     const currentPassword = password;
 
     if (vulnerabilityType === "DICTIONARY") {
-        technicalBreakdown.remediation = `Consider replacing it with a passphrase made from a few unrelated words to break up single-word guessing patterns.`;
+        technicalBreakdown.remediation = `Try unrelated words.`;
     } else if (vulnerabilityType === "RULE-BASED") {
-        technicalBreakdown.remediation = `Consider changing the predictable pattern by mixing symbols and numbers into different parts of the password, rather than placing them only at the start or end.`;
+        technicalBreakdown.remediation = `Mix symbols and numbers throughout.`;
     } else if (vulnerabilityType === "BRUTE-FORCE") {
-        technicalBreakdown.remediation = `Consider making it longer and using different types of characters to expand the overall combination pool.`;
+        technicalBreakdown.remediation = `Make it longer with more character types.`;
     }
 
     tips.push("Enable MFA for extra protection.");
@@ -788,25 +788,25 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
                 "Additionally: " + RECOMMENDATION_LABEL_TEMPLATES[secondLabel](extractedFeatures, currentPassword)
             );
         } else {
-            tips.push("Consider using a password manager to create and store unique passwords for each account, helping you avoid reusing passwords.");
+            tips.push("Use a password manager for unique passwords.");
         }
     } else {
-        tips.push("Consider using a password manager to create and store unique passwords for each account, helping you avoid reusing passwords.");
+        tips.push("Use a password manager for unique passwords.");
     }
 
     if (recommendationResult && recommendationResult.label) {
         const similarGuesses = generateSimilarGuessablePasswords(currentPassword, extractedFeatures);
         if (similarGuesses.core) {
             tips.push(
-                `Your password's structure is similar to common guessing patterns: starting with a base like '${similarGuesses.core}' and trying variations like '${similarGuesses.examples.join("', '")}'. Automated cracking tools test these exact variations.`
+                `Your password follows '${similarGuesses.core}' patterns.`
             );
         } else {
             tips.push(
-                `Guessing software generates combinations that follow your password's structure (${extractedFeatures.length} characters using its current mix). Examples: '${similarGuesses.examples.join("', ")}'.`
+                `${extractedFeatures.length}-character password with common patterns.`
             );
         }
     } else {
-        tips.push("Guessing software can generate combinations based on password length and character variety.");
+        tips.push("Guessing tools use length and character types.");
     }
 
     return { tips, technicalBreakdown };
@@ -922,11 +922,11 @@ function explainClassification(extractedFeatures, vulnerabilityType) {
     let classification_rationale;
 
     if (vulnerabilityType === "DICTIONARY") {
-        classification_rationale = `The model classified this password as DICTIONARY because it relies heavily on recognizable vocabulary, making it vulnerable to automated wordlist attacks.`;
+        classification_rationale = `Classified as DICTIONARY due to recognizable words`;
     } else if (vulnerabilityType === "RULE-BASED") {
-        classification_rationale = `The model detected structural text changes like leetspeak substitutions, bypassing pure dictionary lookup and triggering the Rule-Based node.`;
+        classification_rationale = `Leetspeak changes triggered the Rule-Based node.`;
     } else if (vulnerabilityType === "BRUTE-FORCE") {
-        classification_rationale = `The model classified this password as BRUTE-FORCE because it contains no dictionary words, leaving security entirely dependent on length and character variety.`;
+        classification_rationale = `Classified as BRUTE-FORCE due to no dictionary words.`;
     } else {
         classification_rationale = `Classification result: ${vulnerabilityType}.`;
     }
