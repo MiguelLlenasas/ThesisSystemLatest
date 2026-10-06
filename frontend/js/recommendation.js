@@ -4,7 +4,7 @@ const recommendationImages = {
     "Avoid Predictable Patterns": "../assets/images/Avoid Predictable Patterns.jpg",
     "Dictionary Words": "../assets/images/Dictionary Words.jpg",
     "Increase Password Length": "../assets/images/Increase Password Length.jpg",
-    "MFA + Password Manager": "../assets/images/MFA + Password Manager.jpg",
+    "MFA + Password Manager": "../assets/images/mfa-password-manager.jpg",
     "Similar Password Guesses": "../assets/images/Similar Password Guesses.jpg",
     "Change Password Every 6 Months": "../assets/images/ChangePassword.jpg",
     "Current Password Is Stronger Than Previous": "../assets/images/Current Password Is Stronger Than Previous.jpg"
