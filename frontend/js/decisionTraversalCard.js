@@ -12,43 +12,6 @@ const DecisionTraversalCard = (() => {
     let activeInfoElement = null;
     let boundaryResizeFrame = null;
 
-    /* =========================================================
-       LANGUAGE HELPER & TRANSLATIONS
-       ========================================================= */
-    function getCurrentLang() {
-        return localStorage.getItem("app_lang") || "en";
-    }
-
-    function getTranslations(lang = "en") {
-        if (lang === "tl") {
-            return {
-                defaultNodeExplanation: "Kumakatawan ang node na ito sa isang desisyong ginawa ng Decision Tree.",
-                classificationResultTitle: "Resulta ng Klasipikasyon",
-                classificationResultText: (label) => `Klinasipika ng system ang password na ito gamit ang paraang ${label}.`,
-                featureBreakdownTitle: "Suri ng mga Katangian",
-                present: "Mayroon",
-                notPresent: "Wala",
-                featureLabel: "Katangian",
-                pathBranchTitle: (branch) => `Sanga ng ${branch || "DAANAN"}`,
-                pathBranchText: (branch) => `Ito ang napiling daanan (${branch || "napili"}) na tinahak ng Decision Tree.`,
-                emptyData: "Walang available na datos para sa pagtawid sa decision-tree."
-            };
-        }
-
-        return {
-            defaultNodeExplanation: "This node represents a decision made by the Decision Tree.",
-            classificationResultTitle: "Classification Result",
-            classificationResultText: (label) => `The system classified this password using the ${label} cracking method.`,
-            featureBreakdownTitle: "Feature breakdown",
-            present: "Present",
-            notPresent: "Not present",
-            featureLabel: "Feature",
-            pathBranchTitle: (branch) => `${branch || "PATH"} Branch`,
-            pathBranchText: (branch) => `This is the ${branch || "selected"} path followed by the Decision Tree.`,
-            emptyData: "No decision-tree traversal data is available."
-        };
-    }
-
     function getRealChildEdges(node) {
 
         if (
@@ -381,8 +344,7 @@ const DecisionTraversalCard = (() => {
             return node.reason;
         }
 
-        const t = getTranslations(getCurrentLang());
-        return t.defaultNodeExplanation;
+        return "This node represents a decision made by the Decision Tree.";
     }
 
     function getNodeLabel(node) {
@@ -664,8 +626,6 @@ const DecisionTraversalCard = (() => {
         text,
         breakdown
     ) {
-        const lang = getCurrentLang();
-        const t = getTranslations(lang);
 
         const panel =
             document.createElement("div");
@@ -684,7 +644,7 @@ const DecisionTraversalCard = (() => {
 
         paragraph.textContent =
             text ||
-            (lang === "tl" ? "Walang karagdagang paliwanag na available." : "No additional explanation available.");
+            "No additional explanation available.";
 
         panel.appendChild(
             heading
@@ -706,7 +666,7 @@ const DecisionTraversalCard = (() => {
                 "decision-traversal-breakdown-title";
 
             breakdownTitle.textContent =
-                t.featureBreakdownTitle;
+                "Feature breakdown";
 
             panel.appendChild(
                 breakdownTitle
@@ -741,10 +701,8 @@ const DecisionTraversalCard = (() => {
                 label.className =
                     "decision-traversal-breakdown-label";
 
-                const presentText = item.present ? t.present : t.notPresent;
-                const featureText = item.label || item.feature || t.featureLabel;
-
-                label.textContent = `${featureText}: ${presentText}`;
+                label.textContent =
+                    `${item.label || item.feature || "Feature"}: ${item.present ? "Present" : "Not present"}`;
 
                 entry.appendChild(
                     label
@@ -930,15 +888,13 @@ const DecisionTraversalCard = (() => {
                 event.preventDefault();
                 event.stopPropagation();
 
-                const lang = getCurrentLang();
-                const t = getTranslations(lang);
                 const actualSide = getElementSide(element);
 
                 if (isResult) {
                     showInfo(
                         actualSide,
-                        t.classificationResultTitle,
-                        t.classificationResultText(getResultLabel(node)),
+                        "Classification Result",
+                        `The system classified this password using the ${getResultLabel(node)} cracking method.`,
                         null,
                         element
                     );
@@ -1095,13 +1051,11 @@ const DecisionTraversalCard = (() => {
                 event.preventDefault();
                 event.stopPropagation();
 
-                const lang = getCurrentLang();
-                const t = getTranslations(lang);
-
                 showInfo(
                     side,
-                    t.pathBranchTitle(edge.branch),
-                    edge.explanation || t.pathBranchText(edge.branch),
+                    `${edge.branch || "PATH"} Branch`,
+                    edge.explanation ||
+                    `This is the ${edge.branch || "selected"} path followed by the Decision Tree.`,
                     null,
                     label
                 );
@@ -1299,8 +1253,6 @@ const DecisionTraversalCard = (() => {
             data.actual_model_decision_path;
 
         if (!path) {
-            const lang = getCurrentLang();
-            const t = getTranslations(lang);
 
             const message =
                 document.createElement("p");
@@ -1309,7 +1261,7 @@ const DecisionTraversalCard = (() => {
                 "decision-traversal-empty";
 
             message.textContent =
-                t.emptyData;
+                "No decision-tree traversal data is available.";
 
             tree.appendChild(
                 message

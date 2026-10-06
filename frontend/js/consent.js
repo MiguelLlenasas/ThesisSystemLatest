@@ -1,12 +1,3 @@
-// CONSENT PAGE - consent.js
-
-/* =========================================================
-   LANGUAGE HELPER
-   ========================================================= */
-function getCurrentLang() {
-    return localStorage.getItem("app_lang") || "en";
-}
-
 const contentArea = document.getElementById("contentArea");
 const sections = document.querySelectorAll(".content-area section");
 const menuItems = document.querySelectorAll(".section-booklet li");

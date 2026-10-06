@@ -12,7 +12,7 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title data-lang-en="Password Analysis Result" data-lang-tl="Resulta ng Pagsusuri ng Password">Password Analysis Result</title>
+<title>Password Analysis Result</title>
 
 <link
     rel="icon"
@@ -63,11 +63,11 @@
 
         <div class="header-text">
 
-            <h1 data-lang-en="Password Vulnerability Classification System" data-lang-tl="Password Vulnerability Classification System">
+            <h1>
                 Password Vulnerability Classification System
             </h1>
 
-            <p data-lang-en="Password Analysis Result" data-lang-tl="Resulta ng Pagsusuri ng Password">
+            <p>
                 Password Analysis Result
             </p>
 
@@ -92,7 +92,7 @@
                     class="sidebar-icon"
                 >
 
-                <span class="sidebar-text" data-lang-en="Result Summary" data-lang-tl="Buod ng Resulta">
+                <span class="sidebar-text">
                     Result Summary
                 </span>
 
@@ -111,7 +111,7 @@
                     class="sidebar-icon"
                 >
 
-                <span class="sidebar-text" data-lang-en="Password Decision Path" data-lang-tl="Password Decision Path">
+                <span class="sidebar-text">
                     Password Decision Path
                 </span>
 
@@ -130,7 +130,7 @@
                     class="sidebar-icon"
                 >
 
-                <span class="sidebar-text" data-lang-en="Recommendations" data-lang-tl="Mga Rekomendasyon">
+                <span class="sidebar-text">
                     Recommendations
                 </span>
 
@@ -149,7 +149,7 @@
                     class="sidebar-icon"
                 >
 
-                <span class="sidebar-text" data-lang-en="Password Feature" data-lang-tl="Katangian ng Password">
+                <span class="sidebar-text">
                     Password Feature
                 </span>
 
@@ -168,7 +168,7 @@
                     class="sidebar-icon"
                 >
 
-                <span class="sidebar-text" data-lang-en="Password Comparison" data-lang-tl="Paghahambing ng Password">
+                <span class="sidebar-text">
                     Password Comparison
                 </span>
 
@@ -187,7 +187,7 @@
                     class="sidebar-icon"
                 >
 
-                <span class="sidebar-text" data-lang-en="Tutorial" data-lang-tl="Tutorial">
+                <span class="sidebar-text">
                     Tutorial
                 </span>
 
@@ -257,12 +257,11 @@
 
             <div class="important-text">
 
-                <strong data-lang-en="Important Notice" data-lang-tl="Mahalagang Paalala">
+                <strong>
                     Important Notice
                 </strong>
 
-                <p data-lang-en="This assessment raises awareness of potential password vulnerabilities. No password can guarantee complete protection."
-                   data-lang-tl="Ang pagtatasa na ito ay nagbibigay-kamalayan sa mga posibleng vulnerability ng password. Walang password ang makakagarantiya ng ganap na proteksyon.">
+                <p>
                     This assessment raises awareness of potential password
                     vulnerabilities. No password can guarantee complete
                     protection.
@@ -277,9 +276,7 @@
 
             <div class="button-tooltip-wrapper">
 
-                <div class="tooltip"
-                     data-lang-en="Ends the current password analysis session and clears all displayed results. The system does not permanently store passwords or analysis data from this session."
-                     data-lang-tl="Tinatapos ang kasalukuyang session ng pagsusuri at binubura ang lahat ng ipinakitang resulta. Hindi permanenteng iniiimbak ng sistema ang mga password o data mula sa session na ito.">
+                <div class="tooltip">
                     Ends the current password analysis session and clears all
                     displayed results. The system does not permanently store
                     passwords or analysis data from this session.
@@ -289,8 +286,6 @@
                     class="reset-btn"
                     type="button"
                     id="resetButton"
-                    data-lang-en="Reset"
-                    data-lang-tl="I-reset"
                 >
                     Reset
                 </button>
@@ -300,9 +295,7 @@
 
             <div class="button-tooltip-wrapper">
 
-                <div class="tooltip"
-                     data-lang-en="Analyze another password and compare it with your previously analyzed password. The system highlights differences in vulnerabilities, feature values, security strength, and overall risk level."
-                     data-lang-tl="Magsuri ng isa pang password at ihambing ito sa naunang nasuring password. Iinipapakita ng sistema ang mga pagkakaiba sa vulnerability, katangian, lakas ng sekuridad, at antas ng peligro.">
+                <div class="tooltip">
                     Analyze another password and compare it with your
                     previously analyzed password. The system highlights
                     differences in vulnerabilities, feature values,
@@ -313,8 +306,6 @@
                     class="compare-btn"
                     type="button"
                     id="compareButton"
-                    data-lang-en="Compare Password"
-                    data-lang-tl="Ipaghambing ang Password"
                 >
                     Compare Password
                 </button>
@@ -327,41 +318,6 @@
 
 </main>
 
-
-<script>
-    /* =========================================================
-       LANGUAGE HELPER & TRANSLATIONS FOR RESULT.HTML
-       ========================================================= */
-    function getCurrentLang() {
-        return localStorage.getItem("app_lang") || "en";
-    }
-
-    function updatePageLanguage() {
-        const lang = getCurrentLang();
-
-        // Update title
-        const titleElem = document.querySelector("title[data-lang-en]");
-        if (titleElem) {
-            document.title = titleElem.getAttribute(`data-lang-${lang}`) || titleElem.getAttribute("data-lang-en");
-        }
-
-        // Update text elements
-        document.querySelectorAll("[data-lang-en]").forEach(elem => {
-            const text = elem.getAttribute(`data-lang-${lang}`);
-            if (text) {
-                elem.textContent = text;
-            }
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        updatePageLanguage();
-    });
-
-    window.addEventListener("languageChanged", () => {
-        updatePageLanguage();
-    });
-</script>
 
 <script src="../js/tutorial.js"></script>
 <script src="../js/featureVector.js"></script>

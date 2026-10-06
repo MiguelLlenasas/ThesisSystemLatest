@@ -4,7 +4,7 @@ const recommendationImages = {
     "Avoid Predictable Patterns": "../assets/images/Avoid Predictable Patterns.jpg",
     "Dictionary Words": "../assets/images/Dictionary Words.jpg",
     "Increase Password Length": "../assets/images/Increase Password Length.jpg",
-    "MFA + Password Manager": "../assets/images/mfa-password-manager.jpg",
+    "MFA + Password Manager": "../assets/images/MFA + Password Manager.jpg",
     "Similar Password Guesses": "../assets/images/Similar Password Guesses.jpg",
     "Change Password Every 6 Months": "../assets/images/ChangePassword.jpg",
     "Current Password Is Stronger Than Previous": "../assets/images/Current Password Is Stronger Than Previous.jpg"
@@ -14,26 +14,6 @@ const recommendationVideos = {
     "Add Character Variety": "../assets/Video/Add Char.mp4"
 };
 
-/* =========================================================
-   LANGUAGE HELPER & TRANSLATIONS
-   ========================================================= */
-function getCurrentLang() {
-    return localStorage.getItem("app_lang") || "en";
-}
-
-function getTranslations(lang = "en") {
-    if (lang === "tl") {
-        return {
-            noRecommendations: "Walang magagamit na mga rekomendasyon.",
-            strongerComparisonMsg: "Ang kasalukuyang password ay mas matibay kaysa sa naunang password."
-        };
-    }
-
-    return {
-        noRecommendations: "No recommendations available.",
-        strongerComparisonMsg: "The current password is stronger than the previous password."
-    };
-}
 
 function updateRecommendation(data, censoredPassword) {
 
@@ -218,11 +198,8 @@ function updateRecommendation(data, censoredPassword) {
         )
     ) {
 
-        const lang = getCurrentLang();
-        const t = getTranslations(lang);
-
         contentContainer.innerHTML =
-            `<p>${t.noRecommendations}</p>`;
+            "<p>No recommendations available.</p>";
 
     }
 
@@ -445,9 +422,7 @@ function findRecommendationImage(text) {
 
     if (
         normalizedText.includes("length") ||
-        normalizedText.includes("longer") ||
-        normalizedText.includes("haba") ||
-        normalizedText.includes("pahabain")
+        normalizedText.includes("longer")
     ) {
         return "Increase Password Length";
     }
@@ -459,12 +434,7 @@ function findRecommendationImage(text) {
         normalizedText.includes("character variety") ||
         normalizedText.includes("symbol") ||
         normalizedText.includes("digit") ||
-        normalizedText.includes("characters") ||
-        normalizedText.includes("uri ng karakter") ||
-        normalizedText.includes("ibang uri") ||
-        normalizedText.includes("simbolo") ||
-        normalizedText.includes("numero") ||
-        normalizedText.includes("titik")
+        normalizedText.includes("characters")
     ) {
         return "Add Character Variety";
     }
@@ -473,9 +443,7 @@ function findRecommendationImage(text) {
     if (
         normalizedText.includes("dictionary") ||
         normalizedText.includes("common word") ||
-        normalizedText.includes("common words") ||
-        normalizedText.includes("diksiyonaryo") ||
-        normalizedText.includes("karaniwang salita")
+        normalizedText.includes("common words")
     ) {
         return "Dictionary Words";
     }
@@ -491,9 +459,7 @@ function findRecommendationImage(text) {
         normalizedText.includes("random word") ||
         normalizedText.includes("random phrase") ||
         normalizedText.includes("unrelated words") ||
-        normalizedText.includes("stronger structure") ||
-        normalizedText.includes("madaling hulaan") ||
-        normalizedText.includes("sunod-sunod")
+        normalizedText.includes("stronger structure")
     ) {
         return "Avoid Predictable Patterns";
     }
@@ -502,9 +468,7 @@ function findRecommendationImage(text) {
     if (
         normalizedText.includes("similar") ||
         normalizedText.includes("guess") ||
-        normalizedText.includes("guesses") ||
-        normalizedText.includes("kahawig") ||
-        normalizedText.includes("paghula")
+        normalizedText.includes("guesses")
     ) {
         return "Similar Password Guesses";
     }
@@ -513,9 +477,7 @@ function findRecommendationImage(text) {
     if (
         normalizedText.includes("6 months") ||
         normalizedText.includes("six months") ||
-        normalizedText.includes("change your password every") ||
-        normalizedText.includes("buwan") ||
-        normalizedText.includes("magpalit ng password")
+        normalizedText.includes("change your password every")
     ) {
         return "Change Password Every 6 Months";
     }
@@ -692,11 +654,8 @@ function renderComparison(comparison, container) {
     text.className =
         "recommendation-text comparison-text";
 
-    const lang = getCurrentLang();
-    const t = getTranslations(lang);
-
-    // Gamitin ang isinaling mensahe kung Tagalog, kundi gamitin ang mula sa backend
-    text.textContent = (lang === "tl") ? t.strongerComparisonMsg : comparison.message;
+    text.textContent =
+        comparison.message;
 
 
     item.appendChild(
