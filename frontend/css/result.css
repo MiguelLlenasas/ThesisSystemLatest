@@ -99,11 +99,13 @@ body::after {
 
 /* =========================================================
    MAIN RESULT CONTAINER
+   FIX: bottom padding reduced (120px -> 24px) because the
+   action bar is now part of the layout flow, not fixed.
 ========================================================= */
 .result-container {
     width: 100%;
     height: 100vh;
-    padding: 30px 40px 120px;
+    padding: 30px 40px 24px;
     display: flex;
     flex-direction: column;
 }
@@ -400,18 +402,14 @@ body::after {
 }
 
 /* =========================================================
-   ACTION BAR
+   ACTION BAR (DESKTOP / LAPTOP)
+   FIX: no longer position: fixed. It sits in the layout
+   flow below the dashboard, so it can never overlap it.
 ========================================================= */
 .action-bar {
-    position: fixed;
-    left: 40px;
-    right: 40px;
-    bottom:
-        clamp(
-            25px,
-            4vh,
-            45px
-        );
+    position: relative;
+    flex-shrink: 0;
+    margin-top: 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -423,13 +421,12 @@ body::after {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    width: 620px;
-    max-width: 620px;
+    flex: 1;
+    min-width: 0;
+    max-width: 720px;
     padding: 0;
     border: none;
     background: transparent;
-    transform:
-        translate(40px, -10px);
 }
 
 .important-icon {
@@ -458,21 +455,22 @@ body::after {
 
 /* =========================================================
    RESET + COMPARISON BUTTONS
-   ALWAYS STACKED VERTICALLY
+   FIX: side by side on desktop / laptop. They are stacked
+   again in the tablet and phone sections below.
 ========================================================= */
 .action-buttons {
-    width: 220px;
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
     flex-shrink: 0;
 }
 
 .action-buttons button {
-    width: 100%;
+    width: 220px;
     min-width: 220px;
-    min-height: 56px;
-    height: 56px;
+    min-height: 52px;
+    height: 52px;
     padding: 0 24px;
     border: none;
     border-radius: 14px;
@@ -524,7 +522,7 @@ body::after {
 @media (min-width: 1201px) and (max-height: 800px) {
     .result-container {
         padding-top: 20px;
-        padding-bottom: 100px;
+        padding-bottom: 16px;
     }
 
     .page-header {
@@ -563,18 +561,23 @@ body::after {
     }
 
     .action-bar {
-        bottom: 20px;
+        margin-top: 12px;
     }
 
     .action-buttons {
-        width: 220px;
-        gap: 10px;
+        gap: 12px;
     }
 
     .action-buttons button {
-        min-width: 220px;
-        height: 54px;
-        min-height: 54px;
+        width: 200px;
+        min-width: 200px;
+        height: 46px;
+        min-height: 46px;
+    }
+
+    .important-text p {
+        font-size: 12px;
+        line-height: 1.4;
     }
 
     .tutorial-card {
@@ -955,6 +958,7 @@ body::after {
     .important-note {
         width: 100%;
         max-width: 100%;
+        flex: none;
         transform: none;
     }
 
@@ -976,6 +980,7 @@ body::after {
         width: 100%;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 12px;
     }
 
@@ -1199,6 +1204,7 @@ body::after {
     .important-note {
         width: 100%;
         max-width: 100%;
+        flex: none;
         transform: none;
     }
 
@@ -1220,6 +1226,7 @@ body::after {
         width: 100%;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 10px;
     }
 
@@ -1382,12 +1389,14 @@ body::after {
         margin-top: 25px;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 18px;
     }
 
     .important-note {
         width: 100%;
         max-width: 100%;
+        flex: none;
         transform: none;
     }
 
@@ -1413,6 +1422,7 @@ body::after {
         width: 100%;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 9px;
     }
 
@@ -1498,6 +1508,7 @@ body::after {
         width: 100%;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 8px;
     }
 
@@ -1682,6 +1693,7 @@ body::after {
     .important-note {
         width: 100%;
         max-width: 100%;
+        flex: none;
         transform: none;
     }
 
@@ -1703,6 +1715,7 @@ body::after {
         width: 100%;
         display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 12px;
     }
 
