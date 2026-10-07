@@ -17,7 +17,80 @@ let tutorialLoaded = false;
 
 
 /* =========================================================
-   LOAD TUTORIAL
+   AUTO RELOAD SETTINGS
+   ========================================================= */
+
+const TUTORIAL_MEDIA_RETRY = {
+
+    maxAttempts: 4,
+
+    baseDelay: 1500,
+
+    videoTimeout: 20000
+
+};
+
+
+/*
+ * Videos that used all retry attempts are stored here.
+ * They will try again when the browser comes back online.
+ */
+
+const exhaustedTutorialMedia =
+    new Set();
+
+
+window.addEventListener(
+    "online",
+    () => {
+
+        const pending =
+            Array.from(
+                exhaustedTutorialMedia
+            );
+
+        exhaustedTutorialMedia.clear();
+
+        pending.forEach(
+            retryFunction => {
+
+                retryFunction();
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   ADD RETRY PARAMETER
+   ========================================================= */
+
+function addTutorialRetryParam(
+    url,
+    attempt
+) {
+
+    const separator =
+        url.includes("?")
+            ? "&"
+            : "?";
+
+    return (
+        url +
+        separator +
+        "reload=" +
+        attempt +
+        "_" +
+        Date.now()
+    );
+
+}
+
+
+/* =========================================================
+   LOAD TUTORIAL COMPONENT
    ========================================================= */
 
 async function loadTutorial() {
@@ -26,46 +99,112 @@ async function loadTutorial() {
         return true;
     }
 
-    try {
 
-        const response = await fetch(
-            "../pages/components/tutorial.html",
-            {
-                cache: "no-cache"
+    const tutorialUrl =
+        "../pages/components/tutorial.html";
+
+
+    const maxAttempts = 4;
+
+
+    for (
+        let attempt = 0;
+        attempt < maxAttempts;
+        attempt++
+    ) {
+
+        try {
+
+            const response =
+                await fetch(
+                    attempt === 0
+                        ? tutorialUrl
+                        : addTutorialRetryParam(
+                            tutorialUrl,
+                            attempt
+                        ),
+                    {
+                        cache: "no-cache"
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+
             }
-        );
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+
+            const html =
+                await response.text();
+
+
+            const wrapper =
+                document.createElement(
+                    "div"
+                );
+
+
+            wrapper.innerHTML =
+                html.trim();
+
+
+            document.body.insertAdjacentHTML(
+                "beforeend",
+                wrapper.innerHTML
+            );
+
+
+            tutorialLoaded = true;
+
+
+            initializeTutorial();
+
+
+            return true;
+
+
+        } catch (error) {
+
+            console.warn(
+                `Failed to load tutorial.html (attempt ${attempt + 1}/${maxAttempts}):`,
+                error
+            );
+
+
+            if (
+                attempt <
+                maxAttempts - 1
+            ) {
+
+                await new Promise(
+                    resolve => {
+
+                        setTimeout(
+                            resolve,
+                            TUTORIAL_MEDIA_RETRY.baseDelay *
+                                (attempt + 1)
+                        );
+
+                    }
+                );
+
+            }
+
         }
 
-        const html = await response.text();
-
-        const wrapper = document.createElement("div");
-
-        wrapper.innerHTML = html.trim();
-
-        document.body.insertAdjacentHTML(
-            "beforeend",
-            wrapper.innerHTML
-        );
-
-        tutorialLoaded = true;
-
-        initializeTutorial();
-
-        return true;
-
-    } catch (error) {
-
-        console.error(
-            "Failed to load tutorial.html:",
-            error
-        );
-
-        return false;
-
     }
+
+
+    console.error(
+        "Failed to load tutorial.html after multiple attempts."
+    );
+
+
+    return false;
 
 }
 
@@ -81,45 +220,54 @@ function initializeTutorial() {
             "tutorialOverlay"
         );
 
+
     tutorialCard =
         document.getElementById(
             "tutorialCard"
         );
+
 
     tutorialClose =
         document.getElementById(
             "tutorialClose"
         );
 
+
     tutorialConfirmOverlay =
         document.getElementById(
             "tutorialConfirmOverlay"
         );
+
 
     tutorialStay =
         document.getElementById(
             "tutorialStay"
         );
 
+
     tutorialSkip =
         document.getElementById(
             "tutorialSkip"
         );
+
 
     tutorialSteps =
         document.querySelectorAll(
             ".tutorial-step"
         );
 
+
     tutorialPrev =
         document.getElementById(
             "tutorialPrev"
         );
 
+
     tutorialNext =
         document.getElementById(
             "tutorialNext"
         );
+
 
     tutorialProgress =
         document.querySelectorAll(
@@ -131,11 +279,13 @@ function initializeTutorial() {
         !tutorialOverlay ||
         !tutorialCard
     ) {
+
         console.warn(
             "Tutorial elements were not found."
         );
 
         return;
+
     }
 
 
@@ -167,12 +317,18 @@ function initializeTutorial() {
                 event.target !==
                 tutorialOverlay
             ) {
+
                 return;
+
             }
 
+
             if (confirmBeforeClose) {
+
                 return;
+
             }
+
 
             hideTutorial();
 
@@ -315,11 +471,8 @@ function playTutorialVideo(video) {
     /*
      * Do NOT call video.load().
      *
-     * Calling load() repeatedly can trigger:
-     *
-     * ERR_CACHE_OPERATION_NOT_SUPPORTED
-     *
-     * especially when running the project locally.
+     * The retry system changes the video's
+     * source when another attempt is needed.
      */
 
 
@@ -327,10 +480,12 @@ function playTutorialVideo(video) {
 
     video.playsInline = true;
 
+
     video.setAttribute(
         "playsinline",
         ""
     );
+
 
     video.setAttribute(
         "webkit-playsinline",
@@ -344,7 +499,9 @@ function playTutorialVideo(video) {
             !video.isConnected ||
             video.hidden
         ) {
+
             return;
+
         }
 
 
@@ -361,12 +518,6 @@ function playTutorialVideo(video) {
             playPromise.catch(
                 error => {
 
-                    /*
-                     * Autoplay restrictions are
-                     * normal and should not break
-                     * the tutorial.
-                     */
-
                     console.warn(
                         "Tutorial video could not autoplay:",
                         error
@@ -380,11 +531,6 @@ function playTutorialVideo(video) {
     };
 
 
-    /*
-     * If the browser already has enough
-     * data, play immediately.
-     */
-
     if (
         video.readyState >= 2
     ) {
@@ -395,11 +541,6 @@ function playTutorialVideo(video) {
 
     }
 
-
-    /*
-     * Otherwise wait for the browser's
-     * existing media loading process.
-     */
 
     video.addEventListener(
         "loadeddata",
@@ -422,6 +563,215 @@ function playTutorialVideo(video) {
 
 
 /* =========================================================
+   LOAD VIDEO WITH AUTO RETRY
+   ========================================================= */
+
+function loadTutorialVideoWithRetry(
+    video,
+    source
+) {
+
+    if (
+        !video ||
+        !source
+    ) {
+
+        return;
+
+    }
+
+
+    let attempt = 0;
+
+    let timeoutId = null;
+
+    let retryId = null;
+
+    let finished = false;
+
+
+    let currentSource =
+        source;
+
+
+    function start() {
+
+        if (finished) {
+            return;
+        }
+
+
+        retryId = null;
+
+
+        clearTimeout(
+            timeoutId
+        );
+
+
+        currentSource =
+            attempt === 0
+                ? source
+                : addTutorialRetryParam(
+                    source,
+                    attempt
+                );
+
+
+        /*
+         * Changing src starts a new media
+         * request without explicitly calling
+         * video.load().
+         */
+
+        video.src =
+            currentSource;
+
+
+        video.muted = true;
+
+        video.playsInline = true;
+
+
+        video.setAttribute(
+            "playsinline",
+            ""
+        );
+
+
+        video.setAttribute(
+            "webkit-playsinline",
+            ""
+        );
+
+
+        timeoutId =
+            setTimeout(
+                handleFailure,
+                TUTORIAL_MEDIA_RETRY.videoTimeout
+            );
+
+    }
+
+
+    function handleFailure() {
+
+        if (finished) {
+            return;
+        }
+
+
+        if (
+            retryId !== null
+        ) {
+
+            return;
+
+        }
+
+
+        clearTimeout(
+            timeoutId
+        );
+
+
+        if (
+            attempt >=
+            TUTORIAL_MEDIA_RETRY.maxAttempts
+        ) {
+
+            exhaustedTutorialMedia.add(
+                manualRetry
+            );
+
+
+            console.warn(
+                "Tutorial video failed after maximum retry attempts:",
+                source
+            );
+
+
+            return;
+
+        }
+
+
+        attempt++;
+
+
+        console.warn(
+            `Retrying tutorial video (${attempt}/${TUTORIAL_MEDIA_RETRY.maxAttempts}):`,
+            source
+        );
+
+
+        retryId =
+            setTimeout(
+                start,
+                TUTORIAL_MEDIA_RETRY.baseDelay *
+                    attempt
+            );
+
+    }
+
+
+    function handleSuccess() {
+
+        finished = true;
+
+
+        clearTimeout(
+            timeoutId
+        );
+
+
+        clearTimeout(
+            retryId
+        );
+
+
+        exhaustedTutorialMedia.delete(
+            manualRetry
+        );
+
+    }
+
+
+    function manualRetry() {
+
+        finished = false;
+
+        attempt = 0;
+
+        start();
+
+    }
+
+
+    video.addEventListener(
+        "loadeddata",
+        handleSuccess
+    );
+
+
+    video.addEventListener(
+        "canplay",
+        handleSuccess
+    );
+
+
+    video.addEventListener(
+        "error",
+        handleFailure
+    );
+
+
+    start();
+
+}
+
+
+/* =========================================================
    UPDATE TUTORIAL
    ========================================================= */
 
@@ -433,7 +783,10 @@ function updateTutorial() {
             const active =
                 index === currentStep;
 
-            step.hidden = !active;
+
+            step.hidden =
+                !active;
+
 
             step.classList.toggle(
                 "active",
@@ -504,8 +857,8 @@ function updateTutorial() {
                 video => {
 
                     /*
-                     * Stop videos that are not
-                     * part of the active step.
+                     * Stop videos belonging to
+                     * inactive tutorial steps.
                      */
 
                     if (
@@ -520,11 +873,8 @@ function updateTutorial() {
 
 
                     /*
-                     * Reset only the playback
-                     * position.
-                     *
-                     * This does NOT force the
-                     * browser to reload the file.
+                     * Reset playback position
+                     * without forcing a reload.
                      */
 
                     try {
@@ -541,9 +891,58 @@ function updateTutorial() {
                     }
 
 
-                    playTutorialVideo(
-                        video
-                    );
+                    /*
+                     * If this video has no source
+                     * yet, use the retry loader.
+                     */
+
+                    if (
+                        !video.src ||
+                        video.dataset.retryInitialized !==
+                        "true"
+                    ) {
+
+                        const source =
+                            video.getAttribute(
+                                "data-original-src"
+                            ) ||
+                            video.getAttribute(
+                                "src"
+                            );
+
+
+                        if (source) {
+
+                            video.dataset.retryInitialized =
+                                "true";
+
+
+                            video.setAttribute(
+                                "data-original-src",
+                                source
+                            );
+
+
+                            loadTutorialVideoWithRetry(
+                                video,
+                                source
+                            );
+
+                        } else {
+
+                            playTutorialVideo(
+                                video
+                            );
+
+                        }
+
+                    } else {
+
+                        playTutorialVideo(
+                            video
+                        );
+
+                    }
 
                 }
             );
@@ -565,6 +964,7 @@ async function showTutorial(
     const loaded =
         await loadTutorial();
 
+
     if (!loaded) {
         return;
     }
@@ -574,12 +974,15 @@ async function showTutorial(
         !tutorialOverlay ||
         !tutorialCard
     ) {
+
         return;
+
     }
 
 
     confirmBeforeClose =
         confirmClose;
+
 
     currentStep = 0;
 
@@ -589,9 +992,12 @@ async function showTutorial(
      * the active video.
      */
 
-    tutorialOverlay.hidden = false;
+    tutorialOverlay.hidden =
+        false;
 
-    tutorialCard.hidden = false;
+
+    tutorialCard.hidden =
+        false;
 
 
     document.body.style.overflow =
@@ -669,7 +1075,8 @@ function hideTutorial() {
     );
 
 
-    document.body.style.overflow = "";
+    document.body.style.overflow =
+        "";
 
 }
 
