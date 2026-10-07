@@ -532,3 +532,247 @@
         font-size: 12px;
     }
 }
+
+/* =========================================================
+   RECOMMENDATION MEDIA LOADING / ERROR STATE
+   ========================================================= */
+
+.recommendation-media-status {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 10px;
+    box-sizing: border-box;
+
+    background: rgba(2, 6, 23, .78);
+
+    text-align: center;
+
+    pointer-events: none;
+}
+
+.recommendation-media-status[hidden] {
+    display: none !important;
+}
+
+
+/* =========================================================
+   LOADING SPINNER
+   ========================================================= */
+
+.recommendation-media-loader {
+    width: 24px;
+    height: 24px;
+
+    margin-bottom: 8px;
+
+    border: 2.5px solid rgba(148, 163, 184, .20);
+    border-top-color: #38bdf8;
+    border-right-color: #3b82f6;
+
+    border-radius: 50%;
+
+    animation: recommendationMediaSpin .8s linear infinite;
+}
+
+.recommendation-media-loading-text {
+    margin: 0;
+
+    color: #cbd5e1;
+
+    font-family: "Segoe UI", "Inter", sans-serif;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.4;
+
+    letter-spacing: .15px;
+}
+
+
+/* =========================================================
+   ERROR STATE
+   ========================================================= */
+
+.recommendation-media-error-icon {
+    width: 26px;
+    height: 26px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 6px;
+
+    border: 1px solid rgba(56, 189, 248, .20);
+    border-radius: 8px;
+
+    background: rgba(56, 189, 248, .06);
+
+    color: #38bdf8;
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.recommendation-media-error-title {
+    margin: 0 0 3px;
+
+    color: #f8fafc;
+
+    font-family: "Segoe UI", "Inter", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.recommendation-media-error-text {
+    max-width: 90px;
+
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-family: "Segoe UI", "Inter", sans-serif;
+    font-size: 8px;
+    line-height: 1.4;
+}
+
+.recommendation-media-reload {
+    min-width: 60px;
+    height: 25px;
+
+    margin-top: 7px;
+    padding: 0 8px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #2563eb;
+    color: #ffffff;
+
+    font-family: "Segoe UI", "Inter", sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    pointer-events: auto;
+
+    transition:
+        background .25s ease,
+        transform .25s ease;
+}
+
+.recommendation-media-reload:hover {
+    background: #3b82f6;
+    transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   SPINNER ANIMATION
+   ========================================================= */
+
+@keyframes recommendationMediaSpin {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (min-width: 601px) and (max-width: 900px) {
+
+    .recommendation-media-loader {
+        width: 23px;
+        height: 23px;
+    }
+
+    .recommendation-media-loading-text {
+        font-size: 9px;
+    }
+
+    .recommendation-media-error-title {
+        font-size: 10px;
+    }
+
+    .recommendation-media-error-text {
+        font-size: 8px;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .recommendation-media-status {
+        padding: 8px;
+    }
+
+    .recommendation-media-loader {
+        width: 21px;
+        height: 21px;
+        border-width: 2px;
+    }
+
+    .recommendation-media-loading-text {
+        font-size: 8px;
+    }
+
+    .recommendation-media-error-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
+    }
+
+    .recommendation-media-error-title {
+        font-size: 9px;
+    }
+
+    .recommendation-media-error-text {
+        max-width: 80px;
+        font-size: 7.5px;
+    }
+
+    .recommendation-media-reload {
+        min-width: 55px;
+        height: 23px;
+        font-size: 7.5px;
+    }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .recommendation-media-loader {
+        animation: none;
+    }
+
+    .recommendation-media-reload {
+        transition: none;
+    }
+
+}

@@ -90,6 +90,361 @@ function addTutorialRetryParam(
 
 
 /* =========================================================
+   MEDIA STATUS UI
+   ========================================================= */
+
+function createTutorialMediaStatus(
+    mediaWrapper
+) {
+
+    if (!mediaWrapper) {
+        return null;
+    }
+
+
+    let status =
+        mediaWrapper.querySelector(
+            ".tutorial-media-status"
+        );
+
+
+    if (status) {
+        return status;
+    }
+
+
+    status =
+        document.createElement(
+            "div"
+        );
+
+
+    status.className =
+        "tutorial-media-status";
+
+
+    const loader =
+        document.createElement(
+            "div"
+        );
+
+
+    loader.className =
+        "tutorial-media-loader";
+
+
+    const loadingText =
+        document.createElement(
+            "p"
+        );
+
+
+    loadingText.className =
+        "tutorial-media-loading-text";
+
+
+    loadingText.textContent =
+        "Loading media...";
+
+
+    const errorIcon =
+        document.createElement(
+            "div"
+        );
+
+
+    errorIcon.className =
+        "tutorial-media-error-icon";
+
+
+    errorIcon.textContent =
+        "!";
+
+
+    const errorTitle =
+        document.createElement(
+            "p"
+        );
+
+
+    errorTitle.className =
+        "tutorial-media-error-title";
+
+
+    errorTitle.textContent =
+        "Media unavailable";
+
+
+    const errorText =
+        document.createElement(
+            "p"
+        );
+
+
+    errorText.className =
+        "tutorial-media-error-text";
+
+
+    errorText.textContent =
+        "The tutorial media could not be loaded.";
+
+
+    const reloadButton =
+        document.createElement(
+            "button"
+        );
+
+
+    reloadButton.className =
+        "tutorial-media-reload";
+
+
+    reloadButton.type =
+        "button";
+
+
+    reloadButton.textContent =
+        "Reload";
+
+
+    status.appendChild(
+        loader
+    );
+
+
+    status.appendChild(
+        loadingText
+    );
+
+
+    status.appendChild(
+        errorIcon
+    );
+
+
+    status.appendChild(
+        errorTitle
+    );
+
+
+    status.appendChild(
+        errorText
+    );
+
+
+    status.appendChild(
+        reloadButton
+    );
+
+
+    mediaWrapper.appendChild(
+        status
+    );
+
+
+    updateTutorialMediaStatus(
+        status,
+        "loading"
+    );
+
+
+    return status;
+
+}
+
+
+/* =========================================================
+   UPDATE MEDIA STATUS
+   ========================================================= */
+
+function updateTutorialMediaStatus(
+    status,
+    state,
+    retryFunction = null
+) {
+
+    if (!status) {
+        return;
+    }
+
+
+    const loader =
+        status.querySelector(
+            ".tutorial-media-loader"
+        );
+
+
+    const loadingText =
+        status.querySelector(
+            ".tutorial-media-loading-text"
+        );
+
+
+    const errorIcon =
+        status.querySelector(
+            ".tutorial-media-error-icon"
+        );
+
+
+    const errorTitle =
+        status.querySelector(
+            ".tutorial-media-error-title"
+        );
+
+
+    const errorText =
+        status.querySelector(
+            ".tutorial-media-error-text"
+        );
+
+
+    const reloadButton =
+        status.querySelector(
+            ".tutorial-media-reload"
+        );
+
+
+    status.dataset.state =
+        state;
+
+
+    /* =====================================================
+       LOADING
+       ===================================================== */
+
+    if (state === "loading") {
+
+        status.hidden =
+            false;
+
+
+        if (loader) {
+            loader.hidden =
+                false;
+        }
+
+
+        if (loadingText) {
+            loadingText.hidden =
+                false;
+        }
+
+
+        if (errorIcon) {
+            errorIcon.hidden =
+                true;
+        }
+
+
+        if (errorTitle) {
+            errorTitle.hidden =
+                true;
+        }
+
+
+        if (errorText) {
+            errorText.hidden =
+                true;
+        }
+
+
+        if (reloadButton) {
+            reloadButton.hidden =
+                true;
+        }
+
+
+        return;
+
+    }
+
+
+    /* =====================================================
+       SUCCESS
+       ===================================================== */
+
+    if (state === "success") {
+
+        status.hidden =
+            true;
+
+
+        return;
+
+    }
+
+
+    /* =====================================================
+       ERROR
+       ===================================================== */
+
+    if (state === "error") {
+
+        status.hidden =
+            false;
+
+
+        if (loader) {
+            loader.hidden =
+                true;
+        }
+
+
+        if (loadingText) {
+            loadingText.hidden =
+                true;
+        }
+
+
+        if (errorIcon) {
+            errorIcon.hidden =
+                false;
+        }
+
+
+        if (errorTitle) {
+            errorTitle.hidden =
+                false;
+        }
+
+
+        if (errorText) {
+            errorText.hidden =
+                false;
+        }
+
+
+        if (reloadButton) {
+
+            reloadButton.hidden =
+                false;
+
+
+            reloadButton.onclick =
+                () => {
+
+                    updateTutorialMediaStatus(
+                        status,
+                        "loading"
+                    );
+
+
+                    if (retryFunction) {
+
+                        retryFunction();
+
+                    }
+
+                };
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
    LOAD TUTORIAL COMPONENT
    ========================================================= */
 
@@ -158,7 +513,8 @@ async function loadTutorial() {
             );
 
 
-            tutorialLoaded = true;
+            tutorialLoaded =
+                true;
 
 
             initializeTutorial();
@@ -408,7 +764,8 @@ function initializeTutorial() {
                 "click",
                 () => {
 
-                    currentStep = index;
+                    currentStep =
+                        index;
 
                     updateTutorial();
 
@@ -461,24 +818,21 @@ function initializeTutorial() {
    PLAY TUTORIAL VIDEO
    ========================================================= */
 
-function playTutorialVideo(video) {
+function playTutorialVideo(
+    video
+) {
 
     if (!video) {
         return;
     }
 
 
-    /*
-     * Do NOT call video.load().
-     *
-     * The retry system changes the video's
-     * source when another attempt is needed.
-     */
+    video.muted =
+        true;
 
 
-    video.muted = true;
-
-    video.playsInline = true;
+    video.playsInline =
+        true;
 
 
     video.setAttribute(
@@ -493,42 +847,43 @@ function playTutorialVideo(video) {
     );
 
 
-    const playVideo = () => {
+    const playVideo =
+        () => {
 
-        if (
-            !video.isConnected ||
-            video.hidden
-        ) {
+            if (
+                !video.isConnected ||
+                video.hidden
+            ) {
 
-            return;
+                return;
 
-        }
-
-
-        const playPromise =
-            video.play();
+            }
 
 
-        if (
-            playPromise &&
-            typeof playPromise.catch ===
-            "function"
-        ) {
+            const playPromise =
+                video.play();
 
-            playPromise.catch(
-                error => {
 
-                    console.warn(
-                        "Tutorial video could not autoplay:",
-                        error
-                    );
+            if (
+                playPromise &&
+                typeof playPromise.catch ===
+                    "function"
+            ) {
 
-                }
-            );
+                playPromise.catch(
+                    error => {
 
-        }
+                        console.warn(
+                            "Tutorial video could not autoplay:",
+                            error
+                        );
 
-    };
+                    }
+                );
+
+            }
+
+        };
 
 
     if (
@@ -568,7 +923,8 @@ function playTutorialVideo(video) {
 
 function loadTutorialVideoWithRetry(
     video,
-    source
+    source,
+    mediaStatus = null
 ) {
 
     if (
@@ -590,10 +946,6 @@ function loadTutorialVideoWithRetry(
     let finished = false;
 
 
-    let currentSource =
-        source;
-
-
     function start() {
 
         if (finished) {
@@ -601,7 +953,8 @@ function loadTutorialVideoWithRetry(
         }
 
 
-        retryId = null;
+        retryId =
+            null;
 
 
         clearTimeout(
@@ -609,7 +962,17 @@ function loadTutorialVideoWithRetry(
         );
 
 
-        currentSource =
+        if (mediaStatus) {
+
+            updateTutorialMediaStatus(
+                mediaStatus,
+                "loading"
+            );
+
+        }
+
+
+        const currentSource =
             attempt === 0
                 ? source
                 : addTutorialRetryParam(
@@ -620,17 +983,19 @@ function loadTutorialVideoWithRetry(
 
         /*
          * Changing src starts a new media
-         * request without explicitly calling
-         * video.load().
+         * request.
          */
 
         video.src =
             currentSource;
 
 
-        video.muted = true;
+        video.muted =
+            true;
 
-        video.playsInline = true;
+
+        video.playsInline =
+            true;
 
 
         video.setAttribute(
@@ -685,6 +1050,17 @@ function loadTutorialVideoWithRetry(
             );
 
 
+            if (mediaStatus) {
+
+                updateTutorialMediaStatus(
+                    mediaStatus,
+                    "error",
+                    manualRetry
+                );
+
+            }
+
+
             console.warn(
                 "Tutorial video failed after maximum retry attempts:",
                 source
@@ -717,7 +1093,13 @@ function loadTutorialVideoWithRetry(
 
     function handleSuccess() {
 
-        finished = true;
+        if (finished) {
+            return;
+        }
+
+
+        finished =
+            true;
 
 
         clearTimeout(
@@ -734,14 +1116,48 @@ function loadTutorialVideoWithRetry(
             manualRetry
         );
 
+
+        if (mediaStatus) {
+
+            updateTutorialMediaStatus(
+                mediaStatus,
+                "success"
+            );
+
+        }
+
     }
 
 
     function manualRetry() {
 
-        finished = false;
+        clearTimeout(
+            timeoutId
+        );
 
-        attempt = 0;
+
+        clearTimeout(
+            retryId
+        );
+
+
+        finished =
+            false;
+
+
+        attempt =
+            0;
+
+
+        if (mediaStatus) {
+
+            updateTutorialMediaStatus(
+                mediaStatus,
+                "loading"
+            );
+
+        }
+
 
         start();
 
@@ -879,7 +1295,8 @@ function updateTutorial() {
 
                     try {
 
-                        video.currentTime = 0;
+                        video.currentTime =
+                            0;
 
                     } catch (error) {
 
@@ -899,7 +1316,7 @@ function updateTutorial() {
                     if (
                         !video.src ||
                         video.dataset.retryInitialized !==
-                        "true"
+                            "true"
                     ) {
 
                         const source =
@@ -923,9 +1340,27 @@ function updateTutorial() {
                             );
 
 
+                            /*
+                             * Create loading/error
+                             * status for this video.
+                             */
+
+                            const mediaWrapper =
+                                video.closest(
+                                    ".tutorial-media"
+                                );
+
+
+                            const mediaStatus =
+                                createTutorialMediaStatus(
+                                    mediaWrapper
+                                );
+
+
                             loadTutorialVideoWithRetry(
                                 video,
-                                source
+                                source,
+                                mediaStatus
                             );
 
                         } else {
@@ -984,7 +1419,8 @@ async function showTutorial(
         confirmClose;
 
 
-    currentStep = 0;
+    currentStep =
+        0;
 
 
     /*

@@ -1,17 +1,28 @@
 console.log("Recommendation JS Connected");
 
 const recommendationImages = {
+
     "Avoid Predictable Patterns": "../assets/images/Avoid Predictable Patterns.jpg",
+
     "Dictionary Words": "../assets/images/Dictionary Words.jpg",
+
     "Increase Password Length": "../assets/images/Increase Password Length.jpg",
+
     "MFA + Password Manager": "../assets/images/mfa-password-manager.jpg",
+
     "Similar Password Guesses": "../assets/images/Similar Password Guesses.jpg",
+
     "Change Password Every 6 Months": "../assets/images/ChangePassword.jpg",
+
     "Current Password Is Stronger Than Previous": "../assets/images/Current Password Is Stronger Than Previous.jpg"
+
 };
 
+
 const recommendationVideos = {
+
     "Add Character Variety": "../assets/Video/Add Char.mp4"
+
 };
 
 
@@ -19,35 +30,41 @@ const recommendationVideos = {
  * ============================================================
  * AUTO RELOAD SETTINGS
  * ============================================================
- * maxAttempts   : how many times to retry before giving up
- * baseDelay     : wait time before a retry (ms). It grows with
- *                 each attempt: 1.5s, 3s, 4.5s, ...
- * imageTimeout  : if an image has not loaded after this long,
- *                 treat it as failed and retry (ms)
- * videoTimeout  : same, but for videos (ms)
  */
 
 const MEDIA_RETRY = {
+
     maxAttempts: 4,
+
     baseDelay: 1500,
+
     imageTimeout: 10000,
+
     videoTimeout: 20000
+
 };
 
+
 /*
- * Media that used up all its retries is stored here.
- * When the browser comes back online, they all try again.
+ * ============================================================
+ * EXHAUSTED MEDIA
+ * ============================================================
  */
+
 const exhaustedMedia = new Set();
+
 
 window.addEventListener("online", () => {
 
-    const pending = Array.from(exhaustedMedia);
+    const pending =
+        Array.from(exhaustedMedia);
 
     exhaustedMedia.clear();
 
     pending.forEach((retryFn) => {
+
         retryFn();
+
     });
 
 });
@@ -55,18 +72,16 @@ window.addEventListener("online", () => {
 
 /*
  * ============================================================
- * LOAD MEDIA WITH AUTO RETRY
+ * RETRY PARAMETER
  * ============================================================
- * element      : <img> or <video>
- * src          : original file path
- * successEvent : "load" for images, "loadeddata" for videos
- * timeoutMs    : how long to wait before calling it a failure
  */
 
 function addRetryParam(url, attempt) {
 
     const separator =
-        url.includes("?") ? "&" : "?";
+        url.includes("?")
+            ? "&"
+            : "?";
 
     return (
         url +
@@ -80,32 +95,357 @@ function addRetryParam(url, attempt) {
 }
 
 
+/*
+ * ============================================================
+ * MEDIA STATUS UI
+ * ============================================================
+ */
+
+function createMediaStatus(wrapper) {
+
+    if (!wrapper) {
+        return null;
+    }
+
+
+    let status =
+        wrapper.querySelector(
+            ".recommendation-media-status"
+        );
+
+
+    if (status) {
+        return status;
+    }
+
+
+    status =
+        document.createElement("div");
+
+    status.className =
+        "recommendation-media-status";
+
+
+    const loader =
+        document.createElement("div");
+
+    loader.className =
+        "recommendation-media-loader";
+
+
+    const loadingText =
+        document.createElement("p");
+
+    loadingText.className =
+        "recommendation-media-loading-text";
+
+    loadingText.textContent =
+        "Loading media...";
+
+
+    const errorIcon =
+        document.createElement("div");
+
+    errorIcon.className =
+        "recommendation-media-error-icon";
+
+    errorIcon.textContent =
+        "!";
+
+
+    const errorTitle =
+        document.createElement("p");
+
+    errorTitle.className =
+        "recommendation-media-error-title";
+
+    errorTitle.textContent =
+        "Media unavailable";
+
+
+    const errorText =
+        document.createElement("p");
+
+    errorText.className =
+        "recommendation-media-error-text";
+
+    errorText.textContent =
+        "The media could not be loaded.";
+
+
+    const reloadButton =
+        document.createElement("button");
+
+    reloadButton.className =
+        "recommendation-media-reload";
+
+    reloadButton.type =
+        "button";
+
+    reloadButton.textContent =
+        "Reload";
+
+
+    status.appendChild(loader);
+
+    status.appendChild(
+        loadingText
+    );
+
+    status.appendChild(
+        errorIcon
+    );
+
+    status.appendChild(
+        errorTitle
+    );
+
+    status.appendChild(
+        errorText
+    );
+
+    status.appendChild(
+        reloadButton
+    );
+
+
+    wrapper.appendChild(status);
+
+
+    status.dataset.state =
+        "loading";
+
+
+    updateMediaStatus(
+        status,
+        "loading"
+    );
+
+
+    return status;
+
+}
+
+
+/*
+ * ============================================================
+ * UPDATE MEDIA STATUS
+ * ============================================================
+ */
+
+function updateMediaStatus(
+    status,
+    state,
+    retryFunction = null
+) {
+
+    if (!status) {
+        return;
+    }
+
+
+    const loader =
+        status.querySelector(
+            ".recommendation-media-loader"
+        );
+
+    const loadingText =
+        status.querySelector(
+            ".recommendation-media-loading-text"
+        );
+
+    const errorIcon =
+        status.querySelector(
+            ".recommendation-media-error-icon"
+        );
+
+    const errorTitle =
+        status.querySelector(
+            ".recommendation-media-error-title"
+        );
+
+    const errorText =
+        status.querySelector(
+            ".recommendation-media-error-text"
+        );
+
+    const reloadButton =
+        status.querySelector(
+            ".recommendation-media-reload"
+        );
+
+
+    status.dataset.state =
+        state;
+
+
+    if (state === "loading") {
+
+        status.hidden = false;
+
+        if (loader) {
+            loader.hidden = false;
+        }
+
+        if (loadingText) {
+            loadingText.hidden = false;
+        }
+
+        if (errorIcon) {
+            errorIcon.hidden = true;
+        }
+
+        if (errorTitle) {
+            errorTitle.hidden = true;
+        }
+
+        if (errorText) {
+            errorText.hidden = true;
+        }
+
+        if (reloadButton) {
+            reloadButton.hidden = true;
+        }
+
+        return;
+
+    }
+
+
+    if (state === "success") {
+
+        status.hidden = true;
+
+        return;
+
+    }
+
+
+    if (state === "error") {
+
+        status.hidden = false;
+
+        if (loader) {
+            loader.hidden = true;
+        }
+
+        if (loadingText) {
+            loadingText.hidden = true;
+        }
+
+        if (errorIcon) {
+            errorIcon.hidden = false;
+        }
+
+        if (errorTitle) {
+            errorTitle.hidden = false;
+        }
+
+        if (errorText) {
+            errorText.hidden = false;
+        }
+
+        if (reloadButton) {
+
+            reloadButton.hidden = false;
+
+            reloadButton.onclick =
+                () => {
+
+                    updateMediaStatus(
+                        status,
+                        "loading"
+                    );
+
+                    if (retryFunction) {
+                        retryFunction();
+                    }
+
+                };
+
+        }
+
+    }
+
+}
+
+
+/*
+ * ============================================================
+ * LOAD MEDIA WITH AUTO RETRY
+ * ============================================================
+ */
+
 function loadMediaWithRetry(
     element,
     src,
     successEvent,
-    timeoutMs
+    timeoutMs,
+    status = null
 ) {
 
+    if (
+        !element ||
+        !src
+    ) {
+
+        return;
+
+    }
+
+
     let attempt = 0;
+
     let timeoutId = null;
+
     let retryId = null;
+
     let finished = false;
+
 
     function start() {
 
+        if (finished) {
+            return;
+        }
+
+
         retryId = null;
 
-        clearTimeout(timeoutId);
+
+        clearTimeout(
+            timeoutId
+        );
+
+
+        if (status) {
+
+            updateMediaStatus(
+                status,
+                "loading"
+            );
+
+        }
+
 
         element.src =
             attempt === 0
                 ? src
-                : addRetryParam(src, attempt);
+                : addRetryParam(
+                    src,
+                    attempt
+                );
 
-        if (element.tagName === "VIDEO") {
+
+        if (
+            element.tagName ===
+            "VIDEO"
+        ) {
+
             element.load();
+
         }
+
 
         timeoutId =
             setTimeout(
@@ -122,26 +462,67 @@ function loadMediaWithRetry(
             return;
         }
 
-        /* a retry is already scheduled */
-        if (retryId !== null) {
-            return;
-        }
 
-        clearTimeout(timeoutId);
+        if (
+            retryId !== null
+        ) {
 
-        if (attempt >= MEDIA_RETRY.maxAttempts) {
-
-            exhaustedMedia.add(manualRetry);
             return;
 
         }
+
+
+        clearTimeout(
+            timeoutId
+        );
+
+
+        if (
+            attempt >=
+            MEDIA_RETRY.maxAttempts
+        ) {
+
+            exhaustedMedia.add(
+                manualRetry
+            );
+
+
+            if (status) {
+
+                updateMediaStatus(
+                    status,
+                    "error",
+                    manualRetry
+                );
+
+            }
+
+
+            console.warn(
+                "Media failed after maximum retry attempts:",
+                src
+            );
+
+
+            return;
+
+        }
+
 
         attempt++;
+
+
+        console.warn(
+            `Retrying media (${attempt}/${MEDIA_RETRY.maxAttempts}):`,
+            src
+        );
+
 
         retryId =
             setTimeout(
                 start,
-                MEDIA_RETRY.baseDelay * attempt
+                MEDIA_RETRY.baseDelay *
+                    attempt
             );
 
     }
@@ -149,20 +530,65 @@ function loadMediaWithRetry(
 
     function handleSuccess() {
 
+        if (finished) {
+            return;
+        }
+
+
         finished = true;
 
-        clearTimeout(timeoutId);
-        clearTimeout(retryId);
 
-        exhaustedMedia.delete(manualRetry);
+        clearTimeout(
+            timeoutId
+        );
+
+        clearTimeout(
+            retryId
+        );
+
+
+        exhaustedMedia.delete(
+            manualRetry
+        );
+
+
+        if (status) {
+
+            updateMediaStatus(
+                status,
+                "success"
+            );
+
+        }
 
     }
 
 
     function manualRetry() {
 
+        clearTimeout(
+            timeoutId
+        );
+
+        clearTimeout(
+            retryId
+        );
+
+
         finished = false;
+
         attempt = 0;
+
+
+        if (status) {
+
+            updateMediaStatus(
+                status,
+                "loading"
+            );
+
+        }
+
 
         start();
 
@@ -174,50 +600,83 @@ function loadMediaWithRetry(
         handleSuccess
     );
 
+
     element.addEventListener(
         "error",
         handleFailure
     );
+
 
     start();
 
 }
 
 
-function updateRecommendation(data, censoredPassword) {
+/*
+ * ============================================================
+ * UPDATE RECOMMENDATION
+ * ============================================================
+ */
+
+function updateRecommendation(
+    data,
+    censoredPassword
+) {
 
     if (!data) {
         return;
     }
 
+
     const imageContainer =
-        document.getElementById("recommendationImage");
+        document.getElementById(
+            "recommendationImage"
+        );
+
 
     const contentContainer =
-        document.getElementById("recommendationContent");
+        document.getElementById(
+            "recommendationContent"
+        );
+
 
     if (!imageContainer) {
         return;
     }
 
+
     if (!contentContainer) {
         return;
     }
 
-    imageContainer.innerHTML = "";
-    contentContainer.innerHTML = "";
 
-    const strategies = Array.isArray(data.strategies)
-        ? [...data.strategies]
-        : [];
+    imageContainer.innerHTML =
+        "";
+
+
+    contentContainer.innerHTML =
+        "";
+
+
+    const strategies =
+        Array.isArray(
+            data.strategies
+        )
+            ? [...data.strategies]
+            : [];
+
 
     const mfaStrategies = [];
+
     const otherStrategies = [];
+
 
     strategies.forEach((tip) => {
 
         const normalizedTip =
-            String(tip || "").toLowerCase();
+            String(tip || "")
+                .toLowerCase();
+
 
         if (
             normalizedTip.includes("mfa") ||
@@ -225,9 +684,17 @@ function updateRecommendation(data, censoredPassword) {
             normalizedTip.includes("multi factor") ||
             normalizedTip.includes("password manager")
         ) {
-            mfaStrategies.push(tip);
+
+            mfaStrategies.push(
+                tip
+            );
+
         } else {
-            otherStrategies.push(tip);
+
+            otherStrategies.push(
+                tip
+            );
+
         }
 
     });
@@ -266,7 +733,8 @@ function updateRecommendation(data, censoredPassword) {
         mfaStrategies.length === 0 &&
         !(
             data.password_comparison &&
-            data.password_comparison.status === "CURRENT_PREFERRED"
+            data.password_comparison.status ===
+                "CURRENT_PREFERRED"
         )
     ) {
 
@@ -294,20 +762,54 @@ function renderRecommendationItem(
 ) {
 
     const mediaName =
-        findRecommendationImage(tip);
+        findRecommendationImage(
+            tip
+        );
+
 
     const item =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     item.className =
         "recommendation-item";
 
 
     const imageWrapper =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     imageWrapper.className =
         "recommendation-image-wrapper";
+
+
+    /*
+     * =====================================================
+     * MEDIA STATUS
+     * =====================================================
+     */
+
+    let mediaStatus = null;
+
+
+    if (
+        mediaName &&
+        (
+            recommendationVideos[mediaName] ||
+            recommendationImages[mediaName]
+        )
+    ) {
+
+        mediaStatus =
+            createMediaStatus(
+                imageWrapper
+            );
+
+    }
 
 
     /*
@@ -322,21 +824,31 @@ function renderRecommendationItem(
     ) {
 
         const video =
-            document.createElement("video");
+            document.createElement(
+                "video"
+            );
+
 
         video.className =
             "recommendation-image recommendation-video";
+
 
         video.setAttribute(
             "aria-label",
             mediaName
         );
 
+
         video.autoplay = true;
+
         video.loop = true;
+
         video.muted = true;
+
         video.playsInline = true;
+
         video.preload = "auto";
+
 
         video.setAttribute(
             "webkit-playsinline",
@@ -351,9 +863,15 @@ function renderRecommendationItem(
                 const playPromise =
                     video.play();
 
-                if (playPromise !== undefined) {
 
-                    playPromise.catch(() => {});
+                if (
+                    playPromise !==
+                    undefined
+                ) {
+
+                    playPromise.catch(
+                        () => {}
+                    );
 
                 }
 
@@ -361,16 +879,24 @@ function renderRecommendationItem(
         );
 
 
-        /* auto reload (sets video.src itself) */
+        /*
+         * Auto reload
+         */
+
         loadMediaWithRetry(
             video,
-            recommendationVideos[mediaName],
+            recommendationVideos[
+                mediaName
+            ],
             "loadeddata",
-            MEDIA_RETRY.videoTimeout
+            MEDIA_RETRY.videoTimeout,
+            mediaStatus
         );
 
 
-        imageWrapper.appendChild(video);
+        imageWrapper.appendChild(
+            video
+        );
 
     }
 
@@ -387,40 +913,58 @@ function renderRecommendationItem(
     ) {
 
         const image =
-            document.createElement("img");
+            document.createElement(
+                "img"
+            );
+
 
         image.className =
             "recommendation-image";
 
+
         image.alt =
             mediaName;
 
+
         image.loading =
             "eager";
+
 
         image.decoding =
             "async";
 
 
-        /* auto reload (sets image.src itself) */
+        /*
+         * Auto reload
+         */
+
         loadMediaWithRetry(
             image,
-            recommendationImages[mediaName],
+            recommendationImages[
+                mediaName
+            ],
             "load",
-            MEDIA_RETRY.imageTimeout
+            MEDIA_RETRY.imageTimeout,
+            mediaStatus
         );
 
 
-        imageWrapper.appendChild(image);
+        imageWrapper.appendChild(
+            image
+        );
 
     }
 
 
     const text =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     text.className =
         "recommendation-text";
+
 
     text.innerHTML =
         censorPassword(
@@ -433,9 +977,11 @@ function renderRecommendationItem(
         imageWrapper
     );
 
+
     item.appendChild(
         text
     );
+
 
     contentContainer.appendChild(
         item
@@ -450,11 +996,14 @@ function renderRecommendationItem(
  * ============================================================
  */
 
-function findRecommendationImage(text) {
+function findRecommendationImage(
+    text
+) {
 
     if (!text) {
         return null;
     }
+
 
     const normalizedText =
         String(text).toLowerCase();
@@ -607,7 +1156,9 @@ function renderComparison(
         comparison.status !==
         "CURRENT_PREFERRED"
     ) {
+
         return;
+
     }
 
 
@@ -617,46 +1168,69 @@ function renderComparison(
 
 
     const item =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     item.className =
         "recommendation-item recommendation-comparison-item";
+
 
     item.dataset.status =
         comparison.status;
 
 
     const imageWrapper =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     imageWrapper.className =
         "recommendation-image-wrapper";
 
 
+    const mediaStatus =
+        createMediaStatus(
+            imageWrapper
+        );
+
+
     const image =
-        document.createElement("img");
+        document.createElement(
+            "img"
+        );
+
 
     image.className =
         "recommendation-image";
 
+
     image.alt =
         "Current Password Is Stronger Than Previous";
 
+
     image.loading =
         "eager";
+
 
     image.decoding =
         "async";
 
 
-    /* auto reload (sets image.src itself) */
+    /*
+     * Auto reload
+     */
+
     loadMediaWithRetry(
         image,
         recommendationImages[
             "Current Password Is Stronger Than Previous"
         ],
         "load",
-        MEDIA_RETRY.imageTimeout
+        MEDIA_RETRY.imageTimeout,
+        mediaStatus
     );
 
 
@@ -666,10 +1240,14 @@ function renderComparison(
 
 
     const text =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     text.className =
         "recommendation-text comparison-text";
+
 
     text.textContent =
         comparison.message;
@@ -679,9 +1257,11 @@ function renderComparison(
         imageWrapper
     );
 
+
     item.appendChild(
         text
     );
+
 
     container.appendChild(
         item
@@ -705,6 +1285,7 @@ function censorPassword(
         return "-";
     }
 
+
     if (!password) {
         return String(text);
     }
@@ -713,11 +1294,17 @@ function censorPassword(
     const passwordString =
         String(password);
 
+
     const escapedPassword =
-        escapeRegex(passwordString);
+        escapeRegex(
+            passwordString
+        );
+
 
     const maskedPassword =
-        "*".repeat(passwordString.length);
+        "*".repeat(
+            passwordString.length
+        );
 
 
     const quotedRegex =
@@ -732,12 +1319,17 @@ function censorPassword(
     const result =
         String(text).replace(
             quotedRegex,
-            function (match, quote) {
+            function (
+                match,
+                quote
+            ) {
 
                 return (
                     "<span class=\"hidden-password\" " +
                     "data-password=\"" +
-                    escapeHtmlAttr(passwordString) +
+                    escapeHtmlAttr(
+                        passwordString
+                    ) +
                     "\">" +
                     maskedPassword +
                     "</span>"
@@ -758,7 +1350,9 @@ function censorPassword(
  * ============================================================
  */
 
-function escapeRegex(string) {
+function escapeRegex(
+    string
+) {
 
     return String(string).replace(
         /[.*+?^${}()|[\]\\]/g,
@@ -774,14 +1368,31 @@ function escapeRegex(string) {
  * ============================================================
  */
 
-function escapeHtmlAttr(string) {
+function escapeHtmlAttr(
+    string
+) {
 
     return String(string)
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        );
 
 }
 
@@ -806,7 +1417,9 @@ function activatePasswordReveal() {
             if (
                 item.dataset.listenerAttached
             ) {
+
                 return;
+
             }
 
 
@@ -815,7 +1428,8 @@ function activatePasswordReveal() {
 
 
             const password =
-                item.dataset.password || "";
+                item.dataset.password ||
+                "";
 
 
             if (!password) {
@@ -854,15 +1468,18 @@ function activatePasswordReveal() {
                 show
             );
 
+
             item.addEventListener(
                 "pointerup",
                 hide
             );
 
+
             item.addEventListener(
                 "pointerleave",
                 hide
             );
+
 
             item.addEventListener(
                 "pointercancel",
@@ -878,10 +1495,12 @@ function activatePasswordReveal() {
                 }
             );
 
+
             item.addEventListener(
                 "touchend",
                 hide
             );
+
 
             item.addEventListener(
                 "touchcancel",
