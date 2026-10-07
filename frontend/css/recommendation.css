@@ -32,11 +32,9 @@
     scrollbar-color: #38bdf8 rgba(15, 23, 42, .35);
 }
 
-
 /* =========================================================
    SECTION
    ========================================================= */
-
 .recommendation-section {
     width: 94%;
     margin: 0;
@@ -45,7 +43,6 @@
     gap: 20px;
 }
 
-/* SCOPED: no longer restyles .section-title in other components */
 .recommendation-section .section-title h2 {
     margin: 0;
     color: #e2e8f0;
@@ -54,8 +51,7 @@
     font-weight: 700;
     letter-spacing: .8px;
     text-transform: uppercase;
-    text-shadow:
-        0 0 12px rgba(56, 189, 248, .18);
+    text-shadow: 0 0 12px rgba(56, 189, 248, .18);
     position: relative;
     display: inline-block;
 }
@@ -67,8 +63,7 @@
     height: 2px;
     margin-top: 7px;
     background: #38bdf8;
-    box-shadow:
-        0 0 8px rgba(56, 189, 248, .65);
+    box-shadow: 0 0 8px rgba(56, 189, 248, .65);
     transition:
         width .4s ease,
         box-shadow .4s ease;
@@ -76,26 +71,18 @@
 
 .recommendation-section .section-title:hover h2::after {
     width: 70px;
-    box-shadow:
-        0 0 14px rgba(56, 189, 248, .9);
+    box-shadow: 0 0 14px rgba(56, 189, 248, .9);
 }
 
-
-/* =========================================================
-   MAIN RECOMMENDATION GRID
-   ========================================================= */
 
 .recommendation-card {
     position: relative;
     width: 100%;
     padding-left: 20px;
     box-sizing: border-box;
-
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-
-    gap: 22px;
-    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .recommendation-card::before {
@@ -105,7 +92,6 @@
     top: 0;
     width: 2px;
     height: 100%;
-
     background: linear-gradient(
         180deg,
         transparent,
@@ -114,36 +100,20 @@
     );
 }
 
-
 /* Hide old image container */
-
 #recommendationImage {
     display: none;
 }
 
-
-/*
-   IMPORTANT:
-   display: contents makes dynamically generated
-   recommendation cards AND the HTML cards behave
-   as children of the SAME grid.
-*/
 
 .recommendation-content {
     width: 100%;
     display: contents;
 }
 
-
 /* =========================================================
    SPECIAL FRONTEND CARDS
    ========================================================= */
-
-.user-choice-card,
-.change-password-card {
-    grid-column: auto;
-}
-
 .user-choice-card {
     order: 998;
 }
@@ -152,151 +122,106 @@
     order: 997;
 }
 
-
 /* =========================================================
-   RECOMMENDATION CARD
+   RECOMMENDATION ROW
    ========================================================= */
-
 .recommendation-item {
     position: relative;
     min-width: 0;
     width: 100%;
-
     border-radius: 10px;
     overflow: hidden;
-
     background: rgba(15, 23, 42, .28);
     border: 1px solid rgba(148, 163, 184, .12);
-
     display: flex;
-    flex-direction: column;
-
+    flex-direction: row;
+    align-items: stretch;
     transition:
-        transform .4s cubic-bezier(.2,.8,.2,1),
+        transform .4s cubic-bezier(.2, .8, .2, 1),
         border-color .4s ease,
         background .4s ease,
         box-shadow .4s ease;
 }
 
 .recommendation-item:hover {
-    transform: translateY(-7px);
-
+    transform: translateX(6px);
     background: rgba(15, 23, 42, .48);
-
     border-color: rgba(56, 189, 248, .4);
-
     box-shadow:
-        0 18px 35px rgba(2, 6, 23, .35),
+        0 14px 30px rgba(2, 6, 23, .35),
         0 0 24px rgba(56, 189, 248, .08);
 }
 
-
 /* =========================================================
-   IMAGE
+   IMAGE (small square on the left)
    ========================================================= */
-
 .recommendation-image-wrapper {
     position: relative;
-    width: 100%;
-
-    /*
-       Keeps EVERY image the same proportion.
-       Because all cards have equal grid width,
-       all images will also have equal dimensions.
-    */
-    aspect-ratio: 1 / 1;
-
+    flex: 0 0 96px;
+    width: 96px;
+    height: 96px;
     overflow: hidden;
-    flex-shrink: 0;
-
     background: #020617;
 }
 
 .recommendation-image {
     display: block;
-
     width: 100%;
     height: 100%;
-
     object-fit: cover;
-
     transition:
-        transform .6s cubic-bezier(.2,.8,.2,1),
+        transform .6s cubic-bezier(.2, .8, .2, 1),
         filter .5s ease;
-
     filter: brightness(.88) saturate(.92);
 }
 
-
 /* =========================================================
-   ADD CHARACTER VARIETY VIDEO
+   VIDEO (Add Character Variety)
    ========================================================= */
-
 .recommendation-video {
     width: 100%;
     height: 100%;
-
     display: block;
-
     object-fit: cover;
-
     background: #020617;
 }
-
 
 /* =========================================================
    IMAGE HOVER
    ========================================================= */
-
 .recommendation-item:hover .recommendation-image {
-    transform: scale(1.035);
-
-    filter:
-        brightness(1.05)
-        saturate(1.08);
+    transform: scale(1.06);
+    filter: brightness(1.05) saturate(1.08);
 }
-
 
 /* =========================================================
    IMAGE OVERLAY
    ========================================================= */
-
 .recommendation-image-wrapper::before {
     content: "";
-
     position: absolute;
     inset: 0;
-
     z-index: 2;
-
     background: linear-gradient(
         180deg,
         transparent 55%,
         rgba(2, 6, 23, .45)
     );
-
     pointer-events: none;
     opacity: .65;
 }
 
-
 /* =========================================================
    IMAGE GLINT
    ========================================================= */
-
 .recommendation-image-wrapper::after {
     content: "";
-
     position: absolute;
-
     z-index: 3;
-
     top: -30%;
     left: -130%;
-
     width: 45%;
     height: 160%;
-
     background: linear-gradient(
         105deg,
         transparent 0%,
@@ -307,9 +232,7 @@
         transparent 62%,
         transparent 100%
     );
-
     transform: skewX(-20deg);
-
     pointer-events: none;
 }
 
@@ -318,150 +241,110 @@
 }
 
 @keyframes recommendationGlint {
-
     0% {
         left: -130%;
         opacity: 0;
     }
-
     12% {
         opacity: 1;
     }
-
     70% {
         opacity: 1;
     }
-
     100% {
         left: 145%;
         opacity: 0;
     }
 }
 
-
 /* =========================================================
-   RECOMMENDATION TEXT
+   RECOMMENDATION TEXT (right of the image)
    ========================================================= */
-
 .recommendation-text {
     position: relative;
-
-    padding: 17px 18px 19px;
-
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 12px 18px;
     color: #cbd5e1;
-
     font-family: "Segoe UI", "Inter", sans-serif;
-
     font-size: 13px;
     font-weight: 500;
-
     letter-spacing: .25px;
-    line-height: 1.7;
-
-    min-height: 68px;
-
+    line-height: 1.6;
     box-sizing: border-box;
-
-    flex: 1;
-
     transition:
         color .35s ease,
         letter-spacing .35s ease;
 }
 
+/* accent line now sits on the left edge of the text */
 .recommendation-text::before {
     content: "";
-
     position: absolute;
-
-    left: 18px;
-    top: 0;
-
-    width: 24px;
-    height: 2px;
-
+    left: 0;
+    top: 18%;
+    width: 2px;
+    height: 64%;
     background: #38bdf8;
-
     opacity: .7;
-
-    box-shadow:
-        0 0 7px rgba(56, 189, 248, .35);
-
+    box-shadow: 0 0 7px rgba(56, 189, 248, .35);
     transition:
-        width .4s ease,
+        height .4s ease,
+        top .4s ease,
         opacity .4s ease,
         box-shadow .4s ease;
 }
 
 .recommendation-item:hover .recommendation-text::before {
-    width: 55px;
-
+    top: 8%;
+    height: 84%;
     opacity: 1;
-
-    box-shadow:
-        0 0 12px rgba(56, 189, 248, .7);
+    box-shadow: 0 0 12px rgba(56, 189, 248, .7);
 }
 
 .recommendation-item:hover .recommendation-text {
     color: #f1f5f9;
-
     letter-spacing: .35px;
 }
 
-
 /* =========================================================
-   COMPARISON CARD (matches class used by JS)
+   COMPARISON ROW (matches class used by JS)
    ========================================================= */
-
 .recommendation-comparison-item .comparison-text {
     color: #22c55e;
-
-    text-shadow:
-        0 0 8px rgba(34, 197, 94, .12);
+    text-shadow: 0 0 8px rgba(34, 197, 94, .12);
 }
 
 .recommendation-comparison-item:hover .comparison-text {
     color: #4ade80;
-
-    text-shadow:
-        0 0 10px rgba(34, 197, 94, .25);
+    text-shadow: 0 0 10px rgba(34, 197, 94, .25);
 }
 
 .recommendation-comparison-item .comparison-text::before {
     background: #22c55e;
-
-    box-shadow:
-        0 0 7px rgba(34, 197, 94, .35);
+    box-shadow: 0 0 7px rgba(34, 197, 94, .35);
 }
 
-
 /* =========================================================
-   COMPARISON
+   COMPARISON (plain text block, if used)
    ========================================================= */
-
 .recommendation-comparison {
-    grid-column: 1 / -1;
-
+    width: 100%;
     position: relative;
-
     padding: 15px 18px;
-
     color: #cbd5e1;
-
     font-family: "Segoe UI", "Inter", sans-serif;
-
     font-size: 13px;
     font-weight: 500;
-
     letter-spacing: .25px;
     line-height: 1.7;
-
     background: rgba(15, 23, 42, .3);
-
     border-left: 2px solid rgba(56, 189, 248, .5);
-
     border-radius: 3px;
-
+    box-sizing: border-box;
     transition:
         background .35s ease,
         border-color .35s ease,
@@ -471,32 +354,23 @@
 
 .recommendation-comparison:hover {
     transform: translateX(5px);
-
     background: rgba(56, 189, 248, .06);
-
     border-left-color: #38bdf8;
-
     letter-spacing: .35px;
 }
-
 
 /* =========================================================
    COMPARISON STATUS
    ========================================================= */
-
 .recommendation-comparison[data-status="PREVIOUS_PREFERRED"],
 .recommendation-comparison[data-status="CURRENT_PREFERRED"],
 .recommendation-comparison[data-status="IDENTICAL"],
 .recommendation-comparison[data-status="SIMILAR"],
 .recommendation-comparison[data-status="SIMILARITY"],
 .recommendation-comparison[data-status="SIMILAR_PASSWORD"] {
-
     color: #22c55e;
-
     border-left-color: rgba(34, 197, 94, .65);
-
-    text-shadow:
-        0 0 8px rgba(34, 197, 94, .12);
+    text-shadow: 0 0 8px rgba(34, 197, 94, .12);
 }
 
 .recommendation-comparison[data-status="PREVIOUS_PREFERRED"]:hover,
@@ -505,37 +379,23 @@
 .recommendation-comparison[data-status="SIMILAR"]:hover,
 .recommendation-comparison[data-status="SIMILARITY"]:hover,
 .recommendation-comparison[data-status="SIMILAR_PASSWORD"]:hover {
-
     background: rgba(34, 197, 94, .05);
-
     border-left-color: #22c55e;
-
-    text-shadow:
-        0 0 10px rgba(34, 197, 94, .25);
+    text-shadow: 0 0 10px rgba(34, 197, 94, .25);
 }
-
 
 /* =========================================================
    HIDDEN PASSWORD
    ========================================================= */
-
 .hidden-password {
     display: inline-block;
-
     color: #38bdf8;
-
     cursor: pointer;
-
     font-family: "Courier New", monospace;
-
     font-size: 13px;
     font-weight: 700;
-
     letter-spacing: 2px;
-
-    text-shadow:
-        0 0 8px rgba(56, 189, 248, .45);
-
+    text-shadow: 0 0 8px rgba(56, 189, 248, .45);
     transition:
         color .25s ease,
         text-shadow .25s ease,
@@ -544,88 +404,42 @@
 
 .hidden-password:hover {
     color: #7dd3fc;
-
     letter-spacing: 2.5px;
-
     text-shadow:
         0 0 8px rgba(56, 189, 248, .8),
         0 0 18px rgba(56, 189, 248, .45);
 }
 
 
-/* =========================================================
-   RESULT PANEL
-   REMOVED: the global !important rules for .result-panel,
-   #panelBody and .result-section were clipping every section
-   on the result page (desktop only, because #contentRoot has
-   a fixed height there). Do not add them back.
-   ========================================================= */
-
 
 /* =========================================================
-   LARGE DESKTOP
-   1200px+
+   LARGE DESKTOP  1200px+
    ========================================================= */
-
 @media (min-width: 1200px) {
-
     .recommendation-section {
         width: 96%;
     }
 
-    .recommendation-card {
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr));
-
-        gap: 24px;
-    }
-
     .recommendation-image-wrapper {
-        aspect-ratio: 1 / 1;
-    }
-
-    .recommendation-text {
-        font-size: 13px;
+        flex-basis: 104px;
+        width: 104px;
+        height: 104px;
     }
 }
 
-
 /* =========================================================
-   DESKTOP / LAPTOP
-   901px - 1199px
+   DESKTOP / LAPTOP  901px - 1199px
    ========================================================= */
-
 @media (min-width: 901px) and (max-width: 1199px) {
-
     .recommendation-section {
         width: 95%;
     }
-
-    .recommendation-card {
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr));
-
-        gap: 18px;
-    }
-
-    .recommendation-image-wrapper {
-        aspect-ratio: 1 / 1;
-    }
-
-    .recommendation-text {
-        padding: 15px 16px 17px;
-        font-size: 12.5px;
-    }
 }
 
-
 /* =========================================================
-   TABLET
-   601px - 900px
+   TABLET  601px - 900px
    ========================================================= */
-
 @media (min-width: 601px) and (max-width: 900px) {
-
     .recommendation-page {
         padding-right: 16px;
     }
@@ -634,53 +448,26 @@
         width: 100%;
     }
 
-    /*
-       IMPORTANT:
-       Keep everything in ONE grid.
-       This prevents the frontend cards from becoming
-       separated from the dynamically generated cards.
-    */
-
     .recommendation-card {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 18px;
-
         padding-left: 16px;
     }
 
-    .recommendation-content {
-        display: contents;
-    }
-
-    .recommendation-item {
-        width: 100%;
-    }
-
     .recommendation-image-wrapper {
-        aspect-ratio: 1 / 1;
+        flex-basis: 88px;
+        width: 88px;
+        height: 88px;
     }
 
     .recommendation-text {
-        padding: 15px 16px 17px;
+        padding: 12px 16px;
         font-size: 12.5px;
-        line-height: 1.6;
-    }
-
-    .recommendation-comparison {
-        grid-column: 1 / -1;
     }
 }
 
-
 /* =========================================================
-   LARGE PHONE
-   401px - 600px
+   LARGE PHONE  401px - 600px
    ========================================================= */
-
 @media (min-width: 401px) and (max-width: 600px) {
-
     .recommendation-page {
         padding-right: 12px;
     }
@@ -690,45 +477,27 @@
     }
 
     .recommendation-card {
-        grid-template-columns: 1fr;
-
-        gap: 18px;
-
+        gap: 12px;
         padding-left: 12px;
     }
 
-    .recommendation-content {
-        display: contents;
-    }
-
-    .recommendation-item {
-        width: 100%;
-    }
-
     .recommendation-image-wrapper {
-        aspect-ratio: 1 / 1;
+        flex-basis: 76px;
+        width: 76px;
+        height: 76px;
     }
 
     .recommendation-text {
-        padding: 15px 16px 17px;
-
+        padding: 10px 14px;
         font-size: 12.5px;
-        line-height: 1.6;
-    }
-
-    .recommendation-comparison {
-        grid-column: 1;
+        line-height: 1.5;
     }
 }
 
-
 /* =========================================================
-   SMALL PHONE
-   400px AND BELOW
+   SMALL PHONE  400px AND BELOW
    ========================================================= */
-
 @media (max-width: 400px) {
-
     .recommendation-page {
         padding-right: 8px;
     }
@@ -738,39 +507,28 @@
     }
 
     .recommendation-card {
-        grid-template-columns: 1fr;
-
-        gap: 16px;
-
+        gap: 10px;
         padding-left: 10px;
     }
 
-    .recommendation-content {
-        display: contents;
-    }
-
     .recommendation-item {
-        width: 100%;
         border-radius: 8px;
     }
 
     .recommendation-image-wrapper {
-        aspect-ratio: 1 / 1;
+        flex-basis: 64px;
+        width: 64px;
+        height: 64px;
     }
 
     .recommendation-text {
-        padding: 14px 14px 16px;
-
+        padding: 8px 12px;
         font-size: 12px;
-        line-height: 1.55;
-
-        min-height: 60px;
+        line-height: 1.45;
     }
 
     .recommendation-comparison {
-        grid-column: 1;
         padding: 13px 14px;
-
         font-size: 12px;
     }
 }

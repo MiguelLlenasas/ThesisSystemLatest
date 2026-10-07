@@ -15,6 +15,175 @@ const recommendationVideos = {
 };
 
 
+/*
+ * ============================================================
+ * AUTO RELOAD SETTINGS
+ * ============================================================
+ * maxAttempts   : how many times to retry before giving up
+ * baseDelay     : wait time before a retry (ms). It grows with
+ *                 each attempt: 1.5s, 3s, 4.5s, ...
+ * imageTimeout  : if an image has not loaded after this long,
+ *                 treat it as failed and retry (ms)
+ * videoTimeout  : same, but for videos (ms)
+ */
+
+const MEDIA_RETRY = {
+    maxAttempts: 4,
+    baseDelay: 1500,
+    imageTimeout: 10000,
+    videoTimeout: 20000
+};
+
+/*
+ * Media that used up all its retries is stored here.
+ * When the browser comes back online, they all try again.
+ */
+const exhaustedMedia = new Set();
+
+window.addEventListener("online", () => {
+
+    const pending = Array.from(exhaustedMedia);
+
+    exhaustedMedia.clear();
+
+    pending.forEach((retryFn) => {
+        retryFn();
+    });
+
+});
+
+
+/*
+ * ============================================================
+ * LOAD MEDIA WITH AUTO RETRY
+ * ============================================================
+ * element      : <img> or <video>
+ * src          : original file path
+ * successEvent : "load" for images, "loadeddata" for videos
+ * timeoutMs    : how long to wait before calling it a failure
+ */
+
+function addRetryParam(url, attempt) {
+
+    const separator =
+        url.includes("?") ? "&" : "?";
+
+    return (
+        url +
+        separator +
+        "reload=" +
+        attempt +
+        "_" +
+        Date.now()
+    );
+
+}
+
+
+function loadMediaWithRetry(
+    element,
+    src,
+    successEvent,
+    timeoutMs
+) {
+
+    let attempt = 0;
+    let timeoutId = null;
+    let retryId = null;
+    let finished = false;
+
+    function start() {
+
+        retryId = null;
+
+        clearTimeout(timeoutId);
+
+        element.src =
+            attempt === 0
+                ? src
+                : addRetryParam(src, attempt);
+
+        if (element.tagName === "VIDEO") {
+            element.load();
+        }
+
+        timeoutId =
+            setTimeout(
+                handleFailure,
+                timeoutMs
+            );
+
+    }
+
+
+    function handleFailure() {
+
+        if (finished) {
+            return;
+        }
+
+        /* a retry is already scheduled */
+        if (retryId !== null) {
+            return;
+        }
+
+        clearTimeout(timeoutId);
+
+        if (attempt >= MEDIA_RETRY.maxAttempts) {
+
+            exhaustedMedia.add(manualRetry);
+            return;
+
+        }
+
+        attempt++;
+
+        retryId =
+            setTimeout(
+                start,
+                MEDIA_RETRY.baseDelay * attempt
+            );
+
+    }
+
+
+    function handleSuccess() {
+
+        finished = true;
+
+        clearTimeout(timeoutId);
+        clearTimeout(retryId);
+
+        exhaustedMedia.delete(manualRetry);
+
+    }
+
+
+    function manualRetry() {
+
+        finished = false;
+        attempt = 0;
+
+        start();
+
+    }
+
+
+    element.addEventListener(
+        successEvent,
+        handleSuccess
+    );
+
+    element.addEventListener(
+        "error",
+        handleFailure
+    );
+
+    start();
+
+}
+
+
 function updateRecommendation(data, censoredPassword) {
 
     if (!data) {
@@ -64,21 +233,15 @@ function updateRecommendation(data, censoredPassword) {
     });
 
 
-    if (otherStrategies.length === 0) {
+    otherStrategies.forEach((tip) => {
 
-    } else {
+        renderRecommendationItem(
+            tip,
+            censoredPassword,
+            contentContainer
+        );
 
-        otherStrategies.forEach((tip) => {
-
-            renderRecommendationItem(
-                tip,
-                censoredPassword,
-                contentContainer
-            );
-
-        });
-
-    }
+    });
 
 
     renderComparison(
@@ -87,19 +250,15 @@ function updateRecommendation(data, censoredPassword) {
     );
 
 
-    if (mfaStrategies.length > 0) {
+    mfaStrategies.forEach((tip) => {
 
-        mfaStrategies.forEach((tip) => {
+        renderRecommendationItem(
+            tip,
+            censoredPassword,
+            contentContainer
+        );
 
-            renderRecommendationItem(
-                tip,
-                censoredPassword,
-                contentContainer
-            );
-
-        });
-
-    }
+    });
 
 
     if (
@@ -168,9 +327,6 @@ function renderRecommendationItem(
         video.className =
             "recommendation-image recommendation-video";
 
-        video.src =
-            recommendationVideos[mediaName];
-
         video.setAttribute(
             "aria-label",
             mediaName
@@ -205,6 +361,15 @@ function renderRecommendationItem(
         );
 
 
+        /* auto reload (sets video.src itself) */
+        loadMediaWithRetry(
+            video,
+            recommendationVideos[mediaName],
+            "loadeddata",
+            MEDIA_RETRY.videoTimeout
+        );
+
+
         imageWrapper.appendChild(video);
 
     }
@@ -227,9 +392,6 @@ function renderRecommendationItem(
         image.className =
             "recommendation-image";
 
-        image.src =
-            recommendationImages[mediaName];
-
         image.alt =
             mediaName;
 
@@ -238,6 +400,15 @@ function renderRecommendationItem(
 
         image.decoding =
             "async";
+
+
+        /* auto reload (sets image.src itself) */
+        loadMediaWithRetry(
+            image,
+            recommendationImages[mediaName],
+            "load",
+            MEDIA_RETRY.imageTimeout
+        );
 
 
         imageWrapper.appendChild(image);
@@ -468,11 +639,6 @@ function renderComparison(
     image.className =
         "recommendation-image";
 
-    image.src =
-        recommendationImages[
-            "Current Password Is Stronger Than Previous"
-        ];
-
     image.alt =
         "Current Password Is Stronger Than Previous";
 
@@ -481,6 +647,17 @@ function renderComparison(
 
     image.decoding =
         "async";
+
+
+    /* auto reload (sets image.src itself) */
+    loadMediaWithRetry(
+        image,
+        recommendationImages[
+            "Current Password Is Stronger Than Previous"
+        ],
+        "load",
+        MEDIA_RETRY.imageTimeout
+    );
 
 
     imageWrapper.appendChild(

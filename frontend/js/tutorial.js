@@ -16,6 +16,10 @@ let currentStep = 0;
 let tutorialLoaded = false;
 
 
+/* =========================================================
+   LOAD TUTORIAL
+   ========================================================= */
+
 async function loadTutorial() {
 
     if (tutorialLoaded) {
@@ -38,6 +42,7 @@ async function loadTutorial() {
         const html = await response.text();
 
         const wrapper = document.createElement("div");
+
         wrapper.innerHTML = html.trim();
 
         document.body.insertAdjacentHTML(
@@ -65,34 +70,56 @@ async function loadTutorial() {
 }
 
 
+/* =========================================================
+   INITIALIZE TUTORIAL
+   ========================================================= */
+
 function initializeTutorial() {
 
     tutorialOverlay =
-        document.getElementById("tutorialOverlay");
+        document.getElementById(
+            "tutorialOverlay"
+        );
 
     tutorialCard =
-        document.getElementById("tutorialCard");
+        document.getElementById(
+            "tutorialCard"
+        );
 
     tutorialClose =
-        document.getElementById("tutorialClose");
+        document.getElementById(
+            "tutorialClose"
+        );
 
     tutorialConfirmOverlay =
-        document.getElementById("tutorialConfirmOverlay");
+        document.getElementById(
+            "tutorialConfirmOverlay"
+        );
 
     tutorialStay =
-        document.getElementById("tutorialStay");
+        document.getElementById(
+            "tutorialStay"
+        );
 
     tutorialSkip =
-        document.getElementById("tutorialSkip");
+        document.getElementById(
+            "tutorialSkip"
+        );
 
     tutorialSteps =
-        document.querySelectorAll(".tutorial-step");
+        document.querySelectorAll(
+            ".tutorial-step"
+        );
 
     tutorialPrev =
-        document.getElementById("tutorialPrev");
+        document.getElementById(
+            "tutorialPrev"
+        );
 
     tutorialNext =
-        document.getElementById("tutorialNext");
+        document.getElementById(
+            "tutorialNext"
+        );
 
     tutorialProgress =
         document.querySelectorAll(
@@ -100,10 +127,21 @@ function initializeTutorial() {
         );
 
 
-    if (!tutorialOverlay || !tutorialCard) {
+    if (
+        !tutorialOverlay ||
+        !tutorialCard
+    ) {
+        console.warn(
+            "Tutorial elements were not found."
+        );
+
         return;
     }
 
+
+    /* =====================================================
+       CLOSE BUTTON
+       ===================================================== */
 
     tutorialClose?.addEventListener(
         "click",
@@ -117,12 +155,17 @@ function initializeTutorial() {
     );
 
 
+    /* =====================================================
+       OVERLAY CLICK
+       ===================================================== */
+
     tutorialOverlay.addEventListener(
         "click",
         event => {
 
             if (
-                event.target !== tutorialOverlay
+                event.target !==
+                tutorialOverlay
             ) {
                 return;
             }
@@ -137,6 +180,10 @@ function initializeTutorial() {
     );
 
 
+    /* =====================================================
+       CARD CLICK
+       ===================================================== */
+
     tutorialCard.addEventListener(
         "click",
         event => {
@@ -146,6 +193,10 @@ function initializeTutorial() {
         }
     );
 
+
+    /* =====================================================
+       PREVIOUS
+       ===================================================== */
 
     tutorialPrev?.addEventListener(
         "click",
@@ -162,6 +213,10 @@ function initializeTutorial() {
         }
     );
 
+
+    /* =====================================================
+       NEXT
+       ===================================================== */
 
     tutorialNext?.addEventListener(
         "click",
@@ -186,6 +241,10 @@ function initializeTutorial() {
     );
 
 
+    /* =====================================================
+       PROGRESS DOTS
+       ===================================================== */
+
     tutorialProgress.forEach(
         (dot, index) => {
 
@@ -204,6 +263,10 @@ function initializeTutorial() {
     );
 
 
+    /* =====================================================
+       SKIP
+       ===================================================== */
+
     tutorialSkip?.addEventListener(
         "click",
         () => {
@@ -214,12 +277,19 @@ function initializeTutorial() {
     );
 
 
+    /* =====================================================
+       STAY
+       ===================================================== */
+
     tutorialStay?.addEventListener(
         "click",
         () => {
 
             if (tutorialConfirmOverlay) {
-                tutorialConfirmOverlay.hidden = true;
+
+                tutorialConfirmOverlay.hidden =
+                    true;
+
             }
 
         }
@@ -230,6 +300,130 @@ function initializeTutorial() {
 
 }
 
+
+/* =========================================================
+   PLAY TUTORIAL VIDEO
+   ========================================================= */
+
+function playTutorialVideo(video) {
+
+    if (!video) {
+        return;
+    }
+
+
+    /*
+     * Do NOT call video.load().
+     *
+     * Calling load() repeatedly can trigger:
+     *
+     * ERR_CACHE_OPERATION_NOT_SUPPORTED
+     *
+     * especially when running the project locally.
+     */
+
+
+    video.muted = true;
+
+    video.playsInline = true;
+
+    video.setAttribute(
+        "playsinline",
+        ""
+    );
+
+    video.setAttribute(
+        "webkit-playsinline",
+        ""
+    );
+
+
+    const playVideo = () => {
+
+        if (
+            !video.isConnected ||
+            video.hidden
+        ) {
+            return;
+        }
+
+
+        const playPromise =
+            video.play();
+
+
+        if (
+            playPromise &&
+            typeof playPromise.catch ===
+            "function"
+        ) {
+
+            playPromise.catch(
+                error => {
+
+                    /*
+                     * Autoplay restrictions are
+                     * normal and should not break
+                     * the tutorial.
+                     */
+
+                    console.warn(
+                        "Tutorial video could not autoplay:",
+                        error
+                    );
+
+                }
+            );
+
+        }
+
+    };
+
+
+    /*
+     * If the browser already has enough
+     * data, play immediately.
+     */
+
+    if (
+        video.readyState >= 2
+    ) {
+
+        playVideo();
+
+        return;
+
+    }
+
+
+    /*
+     * Otherwise wait for the browser's
+     * existing media loading process.
+     */
+
+    video.addEventListener(
+        "loadeddata",
+        playVideo,
+        {
+            once: true
+        }
+    );
+
+
+    video.addEventListener(
+        "canplay",
+        playVideo,
+        {
+            once: true
+        }
+    );
+
+}
+
+
+/* =========================================================
+   UPDATE TUTORIAL
+   ========================================================= */
 
 function updateTutorial() {
 
@@ -250,6 +444,10 @@ function updateTutorial() {
     );
 
 
+    /* =====================================================
+       UPDATE PROGRESS
+       ===================================================== */
+
     tutorialProgress.forEach(
         (dot, index) => {
 
@@ -262,6 +460,10 @@ function updateTutorial() {
     );
 
 
+    /* =====================================================
+       PREVIOUS BUTTON
+       ===================================================== */
+
     if (tutorialPrev) {
 
         tutorialPrev.disabled =
@@ -269,6 +471,10 @@ function updateTutorial() {
 
     }
 
+
+    /* =====================================================
+       NEXT BUTTON
+       ===================================================== */
 
     if (tutorialNext) {
 
@@ -281,81 +487,76 @@ function updateTutorial() {
     }
 
 
-    /*
-     * =====================================================
-     * VIDEO FIX
-     * =====================================================
-     */
+    /* =====================================================
+       VIDEO
+       ===================================================== */
 
-    const activeStep =
-        tutorialSteps[currentStep];
+    tutorialSteps.forEach(
+        (step, index) => {
 
-    if (activeStep) {
-
-        const videos =
-            activeStep.querySelectorAll(
-                "video"
-            );
-
-        videos.forEach(
-            video => {
-
-                video.pause();
-
-                video.load();
-
-                const playVideo =
-                    () => {
-
-                        const playPromise =
-                            video.play();
-
-                        if (
-                            playPromise &&
-                            typeof playPromise.catch === "function"
-                        ) {
-
-                            playPromise.catch(
-                                error => {
-
-                                    console.warn(
-                                        "Tutorial video autoplay was blocked:",
-                                        error
-                                    );
-
-                                }
-                            );
-
-                        }
-
-                    };
+            const videos =
+                step.querySelectorAll(
+                    "video"
+                );
 
 
-                if (
-                    video.readyState >= 2
-                ) {
+            videos.forEach(
+                video => {
 
-                    playVideo();
+                    /*
+                     * Stop videos that are not
+                     * part of the active step.
+                     */
 
-                } else {
+                    if (
+                        index !== currentStep
+                    ) {
 
-                    video.addEventListener(
-                        "loadeddata",
-                        playVideo,
-                        {
-                            once: true
-                        }
+                        video.pause();
+
+                        return;
+
+                    }
+
+
+                    /*
+                     * Reset only the playback
+                     * position.
+                     *
+                     * This does NOT force the
+                     * browser to reload the file.
+                     */
+
+                    try {
+
+                        video.currentTime = 0;
+
+                    } catch (error) {
+
+                        console.warn(
+                            "Unable to reset tutorial video:",
+                            error
+                        );
+
+                    }
+
+
+                    playTutorialVideo(
+                        video
                     );
 
                 }
+            );
 
-            }
-        );
-
-    }
+        }
+    );
 
 }
 
+
+/* =========================================================
+   SHOW TUTORIAL
+   ========================================================= */
 
 async function showTutorial(
     confirmClose = false
@@ -367,6 +568,7 @@ async function showTutorial(
     if (!loaded) {
         return;
     }
+
 
     if (
         !tutorialOverlay ||
@@ -383,13 +585,14 @@ async function showTutorial(
 
 
     /*
-     * Show tutorial first so the browser
-     * can properly initialize the video.
+     * Show tutorial before starting
+     * the active video.
      */
 
     tutorialOverlay.hidden = false;
 
     tutorialCard.hidden = false;
+
 
     document.body.style.overflow =
         "hidden";
@@ -399,29 +602,50 @@ async function showTutorial(
 
 
     if (tutorialConfirmOverlay) {
-        tutorialConfirmOverlay.hidden = true;
+
+        tutorialConfirmOverlay.hidden =
+            true;
+
     }
 
 }
 
 
+/* =========================================================
+   HIDE TUTORIAL
+   ========================================================= */
+
 function hideTutorial() {
 
     if (tutorialOverlay) {
-        tutorialOverlay.hidden = true;
+
+        tutorialOverlay.hidden =
+            true;
+
     }
+
 
     if (tutorialCard) {
-        tutorialCard.hidden = true;
+
+        tutorialCard.hidden =
+            true;
+
     }
 
+
     if (tutorialConfirmOverlay) {
-        tutorialConfirmOverlay.hidden = true;
+
+        tutorialConfirmOverlay.hidden =
+            true;
+
     }
 
 
     /*
-     * Stop tutorial videos when closing.
+     * Stop all tutorial videos.
+     *
+     * We intentionally do NOT call
+     * video.load().
      */
 
     tutorialSteps.forEach(
@@ -431,6 +655,7 @@ function hideTutorial() {
                 step.querySelectorAll(
                     "video"
                 );
+
 
             videos.forEach(
                 video => {
@@ -448,6 +673,10 @@ function hideTutorial() {
 
 }
 
+
+/* =========================================================
+   ATTEMPT CLOSE
+   ========================================================= */
 
 function attemptClose() {
 
@@ -469,6 +698,10 @@ function attemptClose() {
 
 }
 
+
+/* =========================================================
+   DOM READY
+   ========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -504,6 +737,7 @@ document.addEventListener(
                 "showResultTutorial"
             );
 
+
             showTutorial(true);
 
         }
@@ -511,6 +745,10 @@ document.addEventListener(
     }
 );
 
+
+/* =========================================================
+   PUBLIC TUTORIAL API
+   ========================================================= */
 
 window.Tutorial = {
 
