@@ -646,11 +646,11 @@ const RECOMMENDATION_LABEL_TEMPLATES = {
             : "";
 
         return pickVariant([
-            `Try "${passphrase}" for better unpredictability`,
+            `A passphrase like "${passphrase}" - made from unrelated words - creates a much less predictable password.`,
            
-            `Try "${passphrase}" for a stronger structure.`,
+            `Consider replacing it with something like "${passphrase}" - combining unrelated words creates a stronger structure.`,
         
-            `Try "${passphrase}" for a harder-to-guess password.`
+            `Consider a multi-word passphrase such as "${passphrase}" - using unrelated words creates a longer and harder-to-guess password.`
         ]);
     },
 
@@ -663,11 +663,11 @@ const RECOMMENDATION_LABEL_TEMPLATES = {
         const whatWasFound = found.length > 0 ? found.join(", ") : "a common pattern";
 
         return pickVariant([
-            `Mix numbers, symbols, and letters throughout the password`,
+            `Consider changing the arrangement of your numbers, symbols, and letters instead of placing them only at the beginning or end.`,
 
-            `Mix numbers and symbols instead of only adding them at the ends.`,
+            `Try mixing numbers and symbols into different parts of the password instead of putting them only at the ends.`,
            
-            `Use a random combination instead of modifying a basic word.`
+            `Consider creating a completely random combination rather than just adding extra characters to a basic word.`
         ]);
     },
 
@@ -684,11 +684,11 @@ const RECOMMENDATION_LABEL_TEMPLATES = {
             : "";
 
         return pickVariant([
-            `Use at least ${target} character types for more variety`,
+            `Consider using at least ${target} types (uppercase, lowercase, numbers, and symbols) to create more variety and make it harder to guess.`,
            
-            `Adding missing types makes guessing harder.`,
+            `Adding the missing character types creates many more possibilities, making automated guessing much harder.`,
            
-            `Combine at least ${target} types for more variety.`
+            `Consider combining at least ${target} types to create a more varied and less predictable password.`
         ]);
     },
 
@@ -696,15 +696,15 @@ const RECOMMENDATION_LABEL_TEMPLATES = {
         const target = MANUAL_TREE_THRESHOLDS.length;
         const remaining = Math.max(0, target - f.length);
         const remainingNote = remaining > 0
-            ? ` Add ${remaining} more character${remaining === 1 ? "" : "s"} to reach ${target}.`
-            : ` It meets the ${target} characters, but more is stronger.`;
+            ? ` That's ${remaining} more character${remaining === 1 ? "" : "s"} to reach the ${target}-character recommendation used by the system.`
+            : ` It already meets the ${target}-character recommendation, but extra length still makes it exponentially stronger.`;
 
         return pickVariant([
-            `Adding characters increases the effort needed to guess it.`,
+            `Adding more characters increases the time and effort required for automated tools to guess it.`,
            
-            `Make it longer to increase possible combinations.`,
+            `Consider making it longer to increase the number of possible combinations.`,
            
-            `Add a random word or phrase, avoiding obvious choices.`
+            `Consider extending it by adding an extra random word or phrase, avoiding simple or obvious additions.`
         ]);
     }
 };
@@ -739,7 +739,7 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
 
     if (vulnerabilityType === "DICTIONARY") {
         const word = extractedFeatures._matched_dictionary_word ? ` ("${extractedFeatures._matched_dictionary_word}")` : "";
-        attackVectorText = `Your password uses a common dictionary word${word}. Automated tools can easily test dictionary combinations.`;
+        attackVectorText = `Your password is built around a common dictionary word${word}. Automated tools easily test millions of these exact dictionary combinations per second.`;
     } else if (vulnerabilityType === "RULE-BASED") {
         const mods = [];
         if (extractedFeatures.has_leetspeak) mods.push("letter/symbol swaps");
@@ -747,12 +747,12 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
         if (extractedFeatures.numeric_prefix) mods.push("starting number");
         if (extractedFeatures.numeric_infix) mods.push("middle numbers");
         
-        const modStr = mods.length > 0 ? ` You ${mods.join(", and ")}.` : "";
-        attackVectorText = `Your password uses easy-to-guess changes.${modStr}`;
+        const modStr = mods.length > 0 ? ` Specifically, you ${mods.join(", and ")}.` : "";
+        attackVectorText = `Your password applies predictable tweaks to a base word.${modStr} Crackers use mutation engines to instantly test these exact transformation patterns.`;
     } else if (vulnerabilityType === "BRUTE-FORCE") {
-        attackVectorText = `No dictionary words, but it is short.`;
+        attackVectorText = `Your password contains no dictionary words and relies on random characters. However, its short length makes high-speed GPU guessing effective.`;
     } else {
-        attackVectorText = `Standard risk applies.`;
+        attackVectorText = `Standard vulnerability characteristics apply.`;
     }
 
     let technicalBreakdown = {
@@ -764,14 +764,14 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
     const currentPassword = password;
 
     if (vulnerabilityType === "DICTIONARY") {
-        technicalBreakdown.remediation = `Try unrelated words.`;
+        technicalBreakdown.remediation = `Consider replacing it with a passphrase made from a few unrelated words to break up single-word guessing patterns.`;
     } else if (vulnerabilityType === "RULE-BASED") {
-        technicalBreakdown.remediation = `Mix symbols and numbers throughout.`;
+        technicalBreakdown.remediation = `Consider changing the predictable pattern by mixing symbols and numbers into different parts of the password, rather than placing them only at the start or end.`;
     } else if (vulnerabilityType === "BRUTE-FORCE") {
-        technicalBreakdown.remediation = `Make it longer with more character types.`;
+        technicalBreakdown.remediation = `Consider making it longer and using different types of characters to expand the overall combination pool.`;
     }
 
-    tips.push("Enable MFA for extra protection.");
+    tips.push("Consider enabling Multi-Factor Authentication (MFA) to add an extra verification step if someone discovers your password.");
 
     if (recommendationResult && recommendationResult.label && RECOMMENDATION_LABEL_TEMPLATES[recommendationResult.label]) {
         tips.push(
@@ -788,25 +788,25 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
                 "Additionally: " + RECOMMENDATION_LABEL_TEMPLATES[secondLabel](extractedFeatures, currentPassword)
             );
         } else {
-            tips.push("Use a password manager for unique passwords.");
+            tips.push("Consider using a password manager to create and store unique passwords for each account, helping you avoid reusing passwords.");
         }
     } else {
-        tips.push("Use a password manager for unique passwords.");
+        tips.push("Consider using a password manager to create and store unique passwords for each account, helping you avoid reusing passwords.");
     }
 
     if (recommendationResult && recommendationResult.label) {
         const similarGuesses = generateSimilarGuessablePasswords(currentPassword, extractedFeatures);
         if (similarGuesses.core) {
             tips.push(
-                `Your password follows '${similarGuesses.core}' patterns.`
+                `Your password's structure is similar to common guessing patterns: starting with a base like '${similarGuesses.core}' and trying variations like '${similarGuesses.examples.join("', '")}'. Automated cracking tools test these exact variations.`
             );
         } else {
             tips.push(
-                `${extractedFeatures.length}-character password with common patterns.`
+                `Guessing software generates combinations that follow your password's structure (${extractedFeatures.length} characters using its current mix). Examples: '${similarGuesses.examples.join("', ")}'.`
             );
         }
     } else {
-        tips.push("Guessing tools use length and character types.");
+        tips.push("Guessing software can generate combinations based on password length and character variety.");
     }
 
     return { tips, technicalBreakdown };
