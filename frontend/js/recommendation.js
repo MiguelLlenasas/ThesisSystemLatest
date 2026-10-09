@@ -30,44 +30,20 @@ const recommendationVideos = {
  * ============================================================
  * AUTO RELOAD SETTINGS
  * ============================================================
+ * Media retries forever until it loads.
  */
 
 const MEDIA_RETRY = {
 
-    maxAttempts: 4,
-
     baseDelay: 1500,
+
+    maxDelay: 10000,
 
     imageTimeout: 10000,
 
     videoTimeout: 20000
 
 };
-
-
-/*
- * ============================================================
- * EXHAUSTED MEDIA
- * ============================================================
- */
-
-const exhaustedMedia = new Set();
-
-
-window.addEventListener("online", () => {
-
-    const pending =
-        Array.from(exhaustedMedia);
-
-    exhaustedMedia.clear();
-
-    pending.forEach((retryFn) => {
-
-        retryFn();
-
-    });
-
-});
 
 
 /*
@@ -91,6 +67,44 @@ function addRetryParam(url, attempt) {
         "_" +
         Date.now()
     );
+
+}
+
+
+/*
+ * ============================================================
+ * SHOW / HIDE HELPER
+ * ============================================================
+ * Uses inline display so CSS rules can never override it
+ * (the "hidden" attribute loses to any CSS display rule).
+ */
+
+function setShown(element, shown) {
+
+    if (!element) {
+        return;
+    }
+
+
+    if (shown) {
+
+        element.hidden = false;
+
+        element.style.removeProperty(
+            "display"
+        );
+
+    } else {
+
+        element.hidden = true;
+
+        element.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
 
 }
 
@@ -281,31 +295,19 @@ function updateMediaStatus(
 
     if (state === "loading") {
 
-        status.hidden = false;
+        setShown(status, true);
 
-        if (loader) {
-            loader.hidden = false;
-        }
+        setShown(loader, true);
 
-        if (loadingText) {
-            loadingText.hidden = false;
-        }
+        setShown(loadingText, true);
 
-        if (errorIcon) {
-            errorIcon.hidden = true;
-        }
+        setShown(errorIcon, false);
 
-        if (errorTitle) {
-            errorTitle.hidden = true;
-        }
+        setShown(errorTitle, false);
 
-        if (errorText) {
-            errorText.hidden = true;
-        }
+        setShown(errorText, false);
 
-        if (reloadButton) {
-            reloadButton.hidden = true;
-        }
+        setShown(reloadButton, false);
 
         return;
 
@@ -314,7 +316,7 @@ function updateMediaStatus(
 
     if (state === "success") {
 
-        status.hidden = true;
+        setShown(status, false);
 
         return;
 
@@ -323,31 +325,21 @@ function updateMediaStatus(
 
     if (state === "error") {
 
-        status.hidden = false;
+        setShown(status, true);
 
-        if (loader) {
-            loader.hidden = true;
-        }
+        setShown(loader, false);
 
-        if (loadingText) {
-            loadingText.hidden = true;
-        }
+        setShown(loadingText, false);
 
-        if (errorIcon) {
-            errorIcon.hidden = false;
-        }
+        setShown(errorIcon, true);
 
-        if (errorTitle) {
-            errorTitle.hidden = false;
-        }
+        setShown(errorTitle, true);
 
-        if (errorText) {
-            errorText.hidden = false;
-        }
+        setShown(errorText, true);
+
+        setShown(reloadButton, true);
 
         if (reloadButton) {
-
-            reloadButton.hidden = false;
 
             reloadButton.onclick =
                 () => {
@@ -372,7 +364,7 @@ function updateMediaStatus(
 
 /*
  * ============================================================
- * LOAD MEDIA WITH AUTO RETRY
+ * LOAD MEDIA WITH AUTO RETRY (RETRIES UNTIL IT LOADS)
  * ============================================================
  */
 
@@ -402,11 +394,94 @@ function loadMediaWithRetry(
 
     let finished = false;
 
+    let wasConnected = false;
+
+    let waitingForOnline = false;
+
+
+    /*
+     * Stop retrying if the element was removed from the page
+     * (for example when recommendations are re-rendered).
+     */
+
+    function isDetached() {
+
+        if (element.isConnected) {
+
+            wasConnected = true;
+
+            return false;
+
+        }
+
+
+        return wasConnected;
+
+    }
+
+
+    function stop() {
+
+        finished = true;
+
+        clearTimeout(timeoutId);
+
+        clearTimeout(retryId);
+
+        window.removeEventListener(
+            "online",
+            onOnline
+        );
+
+    }
+
+
+    function setLoadingMessage() {
+
+        if (!status) {
+            return;
+        }
+
+
+        updateMediaStatus(
+            status,
+            "loading"
+        );
+
+
+        const loadingText =
+            status.querySelector(
+                ".recommendation-media-loading-text"
+            );
+
+
+        if (loadingText) {
+
+            loadingText.textContent =
+                attempt > 0
+                    ? "Loading media... retrying (" +
+                      attempt +
+                      ")"
+                    : "Loading media...";
+
+        }
+
+    }
+
 
     function start() {
 
         if (finished) {
             return;
+        }
+
+
+        if (isDetached()) {
+
+            stop();
+
+            return;
+
         }
 
 
@@ -418,14 +493,7 @@ function loadMediaWithRetry(
         );
 
 
-        if (status) {
-
-            updateMediaStatus(
-                status,
-                "loading"
-            );
-
-        }
+        setLoadingMessage();
 
 
         element.src =
@@ -447,11 +515,41 @@ function loadMediaWithRetry(
         }
 
 
+        /*
+         * Timeout grows with each attempt so slow
+         * connections still get a chance to finish.
+         */
+
+        const currentTimeout =
+            Math.min(
+                timeoutMs + attempt * 5000,
+                timeoutMs * 3
+            );
+
+
         timeoutId =
             setTimeout(
                 handleFailure,
-                timeoutMs
+                currentTimeout
             );
+
+    }
+
+
+    function onOnline() {
+
+        waitingForOnline = false;
+
+        if (finished) {
+            return;
+        }
+
+
+        clearTimeout(retryId);
+
+        retryId = null;
+
+        start();
 
     }
 
@@ -460,6 +558,15 @@ function loadMediaWithRetry(
 
         if (finished) {
             return;
+        }
+
+
+        if (isDetached()) {
+
+            stop();
+
+            return;
+
         }
 
 
@@ -477,32 +584,26 @@ function loadMediaWithRetry(
         );
 
 
-        if (
-            attempt >=
-            MEDIA_RETRY.maxAttempts
-        ) {
+        /*
+         * Offline: wait for connection instead of
+         * burning attempts.
+         */
 
-            exhaustedMedia.add(
-                manualRetry
-            );
+        if (!navigator.onLine) {
 
+            if (!waitingForOnline) {
 
-            if (status) {
+                waitingForOnline = true;
 
-                updateMediaStatus(
-                    status,
-                    "error",
-                    manualRetry
+                window.addEventListener(
+                    "online",
+                    onOnline,
+                    { once: true }
                 );
 
             }
 
-
-            console.warn(
-                "Media failed after maximum retry attempts:",
-                src
-            );
-
+            setLoadingMessage();
 
             return;
 
@@ -513,16 +614,25 @@ function loadMediaWithRetry(
 
 
         console.warn(
-            `Retrying media (${attempt}/${MEDIA_RETRY.maxAttempts}):`,
+            "Retrying media (attempt " +
+            attempt +
+            "):",
             src
         );
+
+
+        const delay =
+            Math.min(
+                MEDIA_RETRY.baseDelay *
+                    attempt,
+                MEDIA_RETRY.maxDelay
+            );
 
 
         retryId =
             setTimeout(
                 start,
-                MEDIA_RETRY.baseDelay *
-                    attempt
+                delay
             );
 
     }
@@ -535,21 +645,7 @@ function loadMediaWithRetry(
         }
 
 
-        finished = true;
-
-
-        clearTimeout(
-            timeoutId
-        );
-
-        clearTimeout(
-            retryId
-        );
-
-
-        exhaustedMedia.delete(
-            manualRetry
-        );
+        stop();
 
 
         if (status) {
@@ -566,13 +662,7 @@ function loadMediaWithRetry(
 
     function manualRetry() {
 
-        clearTimeout(
-            timeoutId
-        );
-
-        clearTimeout(
-            retryId
-        );
+        stop();
 
 
         finished = false;
@@ -580,14 +670,7 @@ function loadMediaWithRetry(
         attempt = 0;
 
 
-        if (status) {
-
-            updateMediaStatus(
-                status,
-                "loading"
-            );
-
-        }
+        setLoadingMessage();
 
 
         start();
@@ -1256,7 +1339,6 @@ function renderComparison(
     item.appendChild(
         imageWrapper
     );
-
 
     item.appendChild(
         text
