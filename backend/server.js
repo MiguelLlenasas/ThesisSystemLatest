@@ -798,7 +798,7 @@ function getStrategies(vulnerabilityType, extractedFeatures, password, treeRoot,
         const similarGuesses = generateSimilarGuessablePasswords(currentPassword, extractedFeatures);
         if (similarGuesses.core) {
             tips.push(
-                `Your password's structure is similar to common guessing patterns: starting with a base like '${similarGuesses.core}' and trying variations like '${similarGuesses.examples.join("', '")}'. Automated cracking tools test these exact variations.`
+                `Your password follows common guessing patterns, such as '${similarGuesses.examples.join("', ")}'. Automated cracking tools try these kinds of variations.`
             );
         } else {
             tips.push(

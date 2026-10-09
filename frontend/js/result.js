@@ -803,6 +803,8 @@ async function initializeResultPage() {
     initializePasswordPreview();
 
     initializeActionButtons();
+    // Ilagay ito sa loob ng initializeResultPage() bago matapos ang execution
+    history.replaceState(null, "", window.location.href);
 }
 
 document.addEventListener(
