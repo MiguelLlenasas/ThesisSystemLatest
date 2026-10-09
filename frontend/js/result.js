@@ -1,64 +1,55 @@
-fetch("https://thesissystemlatest.onrender.com/analyze", { method: "HEAD" }).catch(() => {});
+fetch("https://thesissystemlatest.onrender.com/analyze", {
+    method: "HEAD"
+}).catch(() => {});
+
+
 async function analyzePassword(password, previousPassword) {
 
-    const response =
-        await fetch(
-            "https://thesissystemlatest.onrender.com/analyze",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    password,
-                    ...(previousPassword
-                        ? { previousPassword }
-                        : {})
-                })
-            }
-        );
+    const response = await fetch(
+        "https://thesissystemlatest.onrender.com/analyze",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                password,
+                ...(previousPassword
+                    ? { previousPassword }
+                    : {})
+            })
+        }
+    );
 
     if (!response.ok) {
-        throw new Error(
-            "Backend request failed"
-        );
+        throw new Error("Backend request failed");
     }
 
     return response.json();
 }
 
+
 function getResultSource() {
 
-    const storedSource =
-        sessionStorage.getItem(
-            "resultSource"
-        );
+    const storedSource = sessionStorage.getItem("resultSource");
 
     if (storedSource) {
         return storedSource;
     }
 
-    const source =
-        localStorage.getItem(
-            "comparisonPassword"
-        )
-            ? "comTest"
-            : "ini";
+    const source = localStorage.getItem("comparisonPassword")
+        ? "comTest"
+        : "ini";
 
-    sessionStorage.setItem(
-        "resultSource",
-        source
-    );
+    sessionStorage.setItem("resultSource", source);
 
     return source;
 }
 
+
 function readStoredAnalysisResult() {
 
-    const stored =
-        sessionStorage.getItem(
-            "analysisResult"
-        );
+    const stored = sessionStorage.getItem("analysisResult");
 
     if (!stored) {
         return null;
@@ -71,10 +62,8 @@ function readStoredAnalysisResult() {
     }
 }
 
-function cacheOriginalResult(
-    password,
-    data
-) {
+
+function cacheOriginalResult(password, data) {
 
     localStorage.setItem(
         "originalAnalysisResult",
@@ -85,14 +74,10 @@ function cacheOriginalResult(
     );
 }
 
-function readCachedOriginalResult(
-    password
-) {
 
-    const stored =
-        localStorage.getItem(
-            "originalAnalysisResult"
-        );
+function readCachedOriginalResult(password) {
+
+    const stored = localStorage.getItem("originalAnalysisResult");
 
     if (!stored) {
         return null;
@@ -100,8 +85,7 @@ function readCachedOriginalResult(
 
     try {
 
-        const result =
-            JSON.parse(stored);
+        const result = JSON.parse(stored);
 
         return result.password === password
             ? result.data
@@ -112,108 +96,79 @@ function readCachedOriginalResult(
     }
 }
 
+
 function guardResultPageAccess() {
 
-    const navigation =
-        performance.getEntriesByType(
-            "navigation"
-        )[0];
+    const navigation = performance.getEntriesByType("navigation")[0];
 
-    const analyzedPassword =
-        localStorage.getItem(
-            "analyzedPassword"
-        );
+    const analyzedPassword = localStorage.getItem("analyzedPassword");
 
     if (
         navigation?.type === "reload" ||
         navigation?.type === "back_forward" ||
         !analyzedPassword
     ) {
-
-        window.location.replace(
-            "initialTest.html"
-        );
+        window.location.replace("initialTest.html");
     }
 }
 
-async function loadComponents() {
+
+function loadComponents() {
 
     const componentMap = {
-
-        summarySection:
-            "classification.html",
-
-        decisionTreeSection:
-            "decisionTree.html",
-
-        recommendationSection:
-            "recommendation.html",
-
-        featureVectorSection:
-            "featureVector.html",
-
-        comparisonSection:
-            "comparison.html"
+        summarySection: "classification.html",
+        decisionTreeSection: "decisionTree.html",
+        recommendationSection: "recommendation.html",
+        featureVectorSection: "featureVector.html",
+        comparisonSection: "comparison.html"
     };
 
-    for (
-        const [sectionId, fileName]
-        of Object.entries(componentMap)
-    ) {
+    const loadTasks = Object.entries(componentMap).map(
+        async ([sectionId, fileName]) => {
 
-        const section =
-            document.getElementById(
-                sectionId
-            );
+            const section = document.getElementById(sectionId);
 
-        if (!section) {
-            continue;
-        }
+            if (!section) {
+                return;
+            }
 
-        try {
+            try {
 
-            const response =
-                await fetch(
+                const response = await fetch(
                     `./components/${fileName}`
                 );
 
-            if (!response.ok) {
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${fileName}`);
+                }
 
-                throw new Error(
-                    `Failed to load ${fileName}`
+                section.innerHTML = await response.text();
+
+            } catch (error) {
+
+                console.error(
+                    `Component error (${fileName}):`,
+                    error
                 );
             }
-
-            section.innerHTML =
-                await response.text();
-
-        } catch (error) {
-
-            console.error(
-                `Component error (${fileName}):`,
-                error
-            );
         }
-    }
+    );
 
-    if (
-        typeof initializeFeatureVector ===
-        "function"
-    ) {
+    return Promise.all(loadTasks).then(() => {
 
-        initializeFeatureVector();
-    }
+        if (typeof initializeFeatureVector === "function") {
+            initializeFeatureVector();
+        }
 
-    if (
-        typeof SummaryCard !==
-        "undefined" &&
-        typeof SummaryCard.initialize ===
-        "function"
-    ) {
-
-        SummaryCard.initialize();
-    }
+        if (
+            typeof SummaryCard !== "undefined" &&
+            typeof SummaryCard.initialize === "function"
+        ) {
+            SummaryCard.initialize();
+        }
+    });
 }
+
 
 function initializeDecisionTreeEvents() {
 
@@ -230,14 +185,14 @@ function initializeDecisionTreeEvents() {
     );
 }
 
+
 function openDecisionTraversalCard() {
 
     console.log(
         "[Result] Opening Decision Traversal Card"
     );
 
-    const card =
-        window.DecisionTraversalCard;
+    const card = window.DecisionTraversalCard;
 
     if (
         !card ||
@@ -254,41 +209,26 @@ function openDecisionTraversalCard() {
     card.open();
 }
 
+
 function initializeSidebar() {
 
-    const sidebar =
-        document.querySelector(
-            ".sidebar"
-        );
+    const sidebar = document.querySelector(".sidebar");
 
     if (!sidebar) {
         return;
     }
 
-    const tutorialButton =
-        document.getElementById(
-            "tutorialButton"
-        );
+    const tutorialButton = document.getElementById("tutorialButton");
 
-    const tabs =
-        Array.from(
-            sidebar.querySelectorAll(
-                ".sidebar-item[data-section]"
-            )
-        );
+    const tabs = Array.from(
+        sidebar.querySelectorAll(".sidebar-item[data-section]")
+    );
 
-    const sections =
-        Array.from(
-            document.querySelectorAll(
-                ".result-section"
-            )
-        );
+    const sections = Array.from(
+        document.querySelectorAll(".result-section")
+    );
 
-    if (
-        !tabs.length ||
-        !sections.length
-    ) {
-
+    if (!tabs.length || !sections.length) {
         return;
     }
 
@@ -296,103 +236,70 @@ function initializeSidebar() {
 
         tabs.forEach(tab => {
 
-            tab.classList.remove(
-                "active"
-            );
+            tab.classList.remove("active");
 
-            tab.setAttribute(
-                "aria-selected",
-                "false"
-            );
+            tab.setAttribute("aria-selected", "false");
         });
 
         sections.forEach(section => {
 
             section.hidden = true;
 
-            section.classList.remove(
-                "active-section"
-            );
+            section.classList.remove("active-section");
         });
 
-        const selectedTab =
-            tabs.find(
-                tab =>
-                    Number(
-                        tab.dataset.section
-                    ) === index
-            );
+        const selectedTab = tabs.find(
+            tab => Number(tab.dataset.section) === index
+        );
 
-        const selectedSection =
-            sections[index];
+        const selectedSection = sections[index];
 
-        if (
-            !selectedTab ||
-            !selectedSection
-        ) {
-
+        if (!selectedTab || !selectedSection) {
             return;
         }
 
-        selectedTab.classList.add(
-            "active"
-        );
+        selectedTab.classList.add("active");
 
-        selectedTab.setAttribute(
-            "aria-selected",
-            "true"
-        );
+        selectedTab.setAttribute("aria-selected", "true");
 
-        selectedSection.hidden =
-            false;
+        selectedSection.hidden = false;
 
-        selectedSection.classList.add(
-            "active-section"
-        );
+        selectedSection.classList.add("active-section");
     }
 
     tabs.forEach(tab => {
 
-        const index =
-            Number(
-                tab.dataset.section
-            );
+        const index = Number(tab.dataset.section);
 
-        tab.addEventListener(
-            "click",
-            () => {
-                showSection(index);
-            }
-        );
+        tab.addEventListener("click", () => {
+            showSection(index);
+        });
     });
 
-    tutorialButton?.addEventListener(
-        "click",
-        () => {
+    tutorialButton?.addEventListener("click", () => {
 
-            if (
-                typeof TutorialCard !==
-                "undefined" &&
-                typeof TutorialCard.open ===
-                "function"
-            ) {
-
-                TutorialCard.open();
-            }
+        if (
+            typeof TutorialCard !== "undefined" &&
+            typeof TutorialCard.open === "function"
+        ) {
+            TutorialCard.open();
         }
-    );
+    });
 
-    // CHECK IF A SPECIFIC TAB SHOULD BE OPENED
     let initialTab = 0;
+
     const targetTab = sessionStorage.getItem("openTab");
-    
+
     if (targetTab !== null) {
+
         initialTab = Number(targetTab);
+
         sessionStorage.removeItem("openTab");
     }
 
     showSection(initialTab);
 }
+
 
 function renderBackendData(data) {
 
@@ -400,94 +307,53 @@ function renderBackendData(data) {
         return;
     }
 
-    window.latestAnalysisData =
-        data;
+    window.latestAnalysisData = data;
 
-    window.comparisonAnalysisData =
-        null;
+    window.comparisonAnalysisData = null;
 
-    if (
-        typeof updateClassification ===
-        "function"
-    ) {
-
+    if (typeof updateClassification === "function") {
         updateClassification(data);
     }
 
-    if (
-        typeof updateDecisionTree ===
-        "function"
-    ) {
-
+    if (typeof updateDecisionTree === "function") {
         updateDecisionTree(data);
     }
 
-    if (
-        typeof updateFeatureVector ===
-        "function"
-    ) {
-
+    if (typeof updateFeatureVector === "function") {
         updateFeatureVector(data);
     }
 
-    if (
-        typeof updateRecommendation ===
-        "function"
-    ) {
+    if (typeof updateRecommendation === "function") {
 
         const analyzedPassword =
-            localStorage.getItem(
-                "analyzedPassword"
-            ) || "";
+            localStorage.getItem("analyzedPassword") || "";
 
-        updateRecommendation(
-            data,
-            analyzedPassword
-        );
+        updateRecommendation(data, analyzedPassword);
     }
 
-    if (
-        typeof updateComparisonEmptyState ===
-        "function"
-    ) {
-
+    if (typeof updateComparisonEmptyState === "function") {
         updateComparisonEmptyState();
     }
 }
 
+
 async function fetchAnalysisResult() {
 
     const analyzedPassword =
-        localStorage.getItem(
-            "analyzedPassword"
-        );
+        localStorage.getItem("analyzedPassword");
 
     const comparisonPassword =
-        localStorage.getItem(
-            "comparisonPassword"
-        );
+        localStorage.getItem("comparisonPassword");
 
     try {
 
-        if (
-            analyzedPassword &&
-            comparisonPassword
-        ) {
+        if (analyzedPassword && comparisonPassword) {
 
-            sessionStorage.setItem(
-                "resultSource",
-                "comTest"
-            );
+            sessionStorage.setItem("resultSource", "comTest");
 
-            localStorage.setItem(
-                "previousPassword",
-                analyzedPassword
-            );
+            localStorage.setItem("previousPassword", analyzedPassword);
 
-            localStorage.setItem(
-                "currentPassword",
-                comparisonPassword
-            );
+            localStorage.setItem("currentPassword", comparisonPassword);
 
             const comparisonResult =
                 readStoredAnalysisResult() ||
@@ -497,71 +363,36 @@ async function fetchAnalysisResult() {
                 );
 
             const originalResult =
-                readCachedOriginalResult(
-                    analyzedPassword
-                ) ||
-                await analyzePassword(
-                    analyzedPassword
-                );
+                readCachedOriginalResult(analyzedPassword) ||
+                await analyzePassword(analyzedPassword);
 
-            window.latestAnalysisData =
-                comparisonResult;
+            window.latestAnalysisData = comparisonResult;
 
             window.comparisonAnalysisData = {
-
-                previous:
-                    originalResult,
-
-                current:
-                    comparisonResult
+                previous: originalResult,
+                current: comparisonResult
             };
 
-            if (
-                typeof updateClassification ===
-                "function"
-            ) {
-
-                updateClassification(
-                    comparisonResult
-                );
+            if (typeof updateClassification === "function") {
+                updateClassification(comparisonResult);
             }
 
-            if (
-                typeof updateDecisionTree ===
-                "function"
-            ) {
-
-                updateDecisionTree(
-                    comparisonResult
-                );
+            if (typeof updateDecisionTree === "function") {
+                updateDecisionTree(comparisonResult);
             }
 
-            if (
-                typeof updateFeatureVector ===
-                "function"
-            ) {
-
-                updateFeatureVector(
-                    comparisonResult
-                );
+            if (typeof updateFeatureVector === "function") {
+                updateFeatureVector(comparisonResult);
             }
 
-            if (
-                typeof updateRecommendation ===
-                "function"
-            ) {
-
+            if (typeof updateRecommendation === "function") {
                 updateRecommendation(
                     comparisonResult,
                     comparisonPassword
                 );
             }
 
-            if (
-                typeof initializeComparison ===
-                "function"
-            ) {
-
+            if (typeof initializeComparison === "function") {
                 await initializeComparison();
             }
 
@@ -570,13 +401,9 @@ async function fetchAnalysisResult() {
                 comparisonPassword
             );
 
-            localStorage.removeItem(
-                "comparisonPassword"
-            );
+            localStorage.removeItem("comparisonPassword");
 
-            sessionStorage.removeItem(
-                "analysisResult"
-            );
+            sessionStorage.removeItem("analysisResult");
 
             cacheOriginalResult(
                 comparisonPassword,
@@ -590,34 +417,19 @@ async function fetchAnalysisResult() {
             return null;
         }
 
-        sessionStorage.setItem(
-            "resultSource",
-            "ini"
-        );
+        sessionStorage.setItem("resultSource", "ini");
 
-        const storedResult =
-            readStoredAnalysisResult();
+        const storedResult = readStoredAnalysisResult();
 
-        const data =
-            storedResult ||
-            await analyzePassword(
-                analyzedPassword
-            );
+        const data = storedResult || await analyzePassword(analyzedPassword);
 
-        window.latestAnalysisData =
-            data;
+        window.latestAnalysisData = data;
 
-        window.comparisonAnalysisData =
-            null;
+        window.comparisonAnalysisData = null;
 
-        cacheOriginalResult(
-            analyzedPassword,
-            data
-        );
+        cacheOriginalResult(analyzedPassword, data);
 
-        sessionStorage.removeItem(
-            "analysisResult"
-        );
+        sessionStorage.removeItem("analysisResult");
 
         renderBackendData(data);
 
@@ -625,41 +437,27 @@ async function fetchAnalysisResult() {
 
     } catch (error) {
 
-        console.error(
-            "Analysis error:",
-            error
-        );
+        console.error("Analysis error:", error);
 
         return null;
     }
 }
 
+
 function initializePasswordPreview() {
 
     const previousPassword =
-        localStorage.getItem(
-            "previousPassword"
-        ) || "";
+        localStorage.getItem("previousPassword") || "";
 
-    // FIXED: Stripped the OR chain. fetchAnalysisResult() strictly updates 
-    // "analyzedPassword" to be the final inputted password. No more stale data.
     const testedPassword =
-        localStorage.getItem(
-            "analyzedPassword"
-        ) || "";
+        localStorage.getItem("analyzedPassword") || "";
 
     const previousContainer =
-        document.getElementById(
-            "previousPasswordContainer"
-        );
+        document.getElementById("previousPasswordContainer");
 
-    if (
-        previousPassword &&
-        previousContainer
-    ) {
+    if (previousPassword && previousContainer) {
 
-        previousContainer.style.display =
-            "block";
+        previousContainer.style.display = "block";
 
         createPasswordReveal(
             "previousPassword",
@@ -673,44 +471,30 @@ function initializePasswordPreview() {
     );
 }
 
-function createPasswordReveal(
-    id,
-    password
-) {
 
-    const element =
-        document.getElementById(id);
+function createPasswordReveal(id, password) {
 
-    if (
-        !element ||
-        !password
-    ) {
+    const element = document.getElementById(id);
 
+    if (!element || !password) {
         return;
     }
 
-    const masked =
-        "*".repeat(
-            Math.min(
-                password.length,
-                13
-            )
-        );
+    const masked = "*".repeat(
+        Math.min(password.length, 13)
+    );
 
     let revealed = false;
 
-    element.textContent =
-        masked;
+    element.textContent = masked;
 
     element.onclick = () => {
 
-        revealed =
-            !revealed;
+        revealed = !revealed;
 
-        element.textContent =
-            revealed
-                ? password
-                : masked;
+        element.textContent = revealed
+            ? password
+            : masked;
 
         element.classList.toggle(
             "revealed",
@@ -721,6 +505,7 @@ function createPasswordReveal(
     };
 }
 
+
 function clearResultStorage() {
 
     [
@@ -730,53 +515,67 @@ function clearResultStorage() {
         "originalAnalysisResult",
         "comparisonPassword"
     ].forEach(key => {
-
-        localStorage.removeItem(
-            key
-        );
+        localStorage.removeItem(key);
     });
 
-    sessionStorage.removeItem(
-        "analysisResult"
-    );
+    sessionStorage.removeItem("analysisResult");
 
-    sessionStorage.removeItem(
-        "resultSource"
-    );
+    sessionStorage.removeItem("resultSource");
 }
+
 
 function initializeActionButtons() {
 
-    const resetButton =
-        document.getElementById(
-            "resetButton"
-        );
+    const resetButton = document.getElementById("resetButton");
 
-    const compareButton =
-        document.getElementById(
-            "compareButton"
-        );
+    const compareButton = document.getElementById("compareButton");
 
-    resetButton?.addEventListener(
-        "click",
-        () => {
+    resetButton?.addEventListener("click", () => {
 
-            clearResultStorage();
+        clearResultStorage();
 
-            window.location.href =
-                "initialTest.html";
-        }
-    );
+        window.location.href = "initialTest.html";
+    });
 
-    compareButton?.addEventListener(
-        "click",
-        () => {
+    compareButton?.addEventListener("click", () => {
 
-            window.location.href =
-                "comparisonTest.html";
-        }
+        window.location.href = "comparisonTest.html";
+    });
+}
+
+
+/* =============================================================
+   TRANSLATED TEXT LAYOUT SUPPORT
+   This only adds a class to the page root when Tagalog is active.
+   CSS can use this class to adjust wrapping and spacing.
+   It does not alter translation or analysis logic.
+   ============================================================= */
+
+function updateTranslatedLayout() {
+
+    const language =
+        document.documentElement.lang ||
+        (window.I18N && typeof window.I18N.getLanguage === "function"
+            ? window.I18N.getLanguage()
+            : "en");
+
+    document.documentElement.classList.toggle(
+        "translated-layout",
+        language.toLowerCase().startsWith("tl")
     );
 }
+
+
+function initializeTranslatedLayoutSupport() {
+
+    updateTranslatedLayout();
+
+    document.addEventListener(
+        "languagechange",
+        updateTranslatedLayout
+    );
+}
+
 
 async function initializeResultPage() {
 
@@ -788,24 +587,28 @@ async function initializeResultPage() {
 
     initializeSidebar();
 
-    if (
-        typeof initializeDecisionTree ===
-        "function"
-    ) {
-
+    if (typeof initializeDecisionTree === "function") {
         initializeDecisionTree();
     }
 
-    // Await this first so the local storage keys are fully locked in and correct
     await fetchAnalysisResult();
 
-    // Now safely read the verified correct password for the preview
     initializePasswordPreview();
 
     initializeActionButtons();
-    // Ilagay ito sa loob ng initializeResultPage() bago matapos ang execution
-    history.replaceState(null, "", window.location.href);
+
+    updateTranslatedLayout();
+
+    history.replaceState(
+        null,
+        "",
+        window.location.href
+    );
 }
+
+
+initializeTranslatedLayoutSupport();
+
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -815,14 +618,19 @@ document.addEventListener(
     }
 );
 
-window.addEventListener("pageshow", (event) => {
-    // 1. Kuhanin ang navigation entry gamit ang modern PerformanceObserver API
-    const entries = performance.getEntriesByType("navigation");
-    const isBackForward = entries.length > 0 && entries[0].type === "back_forward";
 
-    // 2. I-check kung galing sa bfcache (event.persisted) o kaya naman ay back/forward button
+window.addEventListener("pageshow", (event) => {
+
+    const entries = performance.getEntriesByType("navigation");
+
+    const isBackForward =
+        entries.length > 0 &&
+        entries[0].type === "back_forward";
+
     if (event.persisted || isBackForward) {
+
         document.documentElement.style.display = "none";
+
         window.location.replace("initialTest.html");
     }
 });

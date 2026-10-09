@@ -1,3 +1,4 @@
+
 * {
     box-sizing: border-box;
     font-family: "Segoe UI", Arial, Helvetica, sans-serif;
@@ -6,6 +7,7 @@
 body {
     margin: 0;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     background: radial-gradient(circle at center, #16213e 0%, #020617 70%);
     display: flex;
@@ -23,18 +25,20 @@ body::before {
     content: "";
     position: absolute;
     inset: 0;
-    background-image: 
+    background-image:
         linear-gradient(rgba(56, 189, 248, .05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(56, 189, 248, .05) 1px, transparent 1px);
     background-size: 50px 50px;
     animation: gridMove 20s linear infinite;
     z-index: 0;
+    pointer-events: none;
 }
 
 @keyframes gridMove {
     from {
         background-position: 0 0, 0 0;
     }
+
     to {
         background-position: 50px 50px, 50px 50px;
     }
@@ -53,12 +57,14 @@ body::after {
     opacity: .25;
     animation: scan 8s linear infinite;
     z-index: 1;
+    pointer-events: none;
 }
 
 @keyframes scan {
     from {
         top: -10%;
     }
+
     to {
         top: 110%;
     }
@@ -72,6 +78,7 @@ body::after {
     text-align: center;
     margin-bottom: 18px;
     z-index: 2;
+    flex-shrink: 0;
 }
 
 .system-name h1 {
@@ -97,7 +104,7 @@ body::after {
 
 .system-name p {
     margin-top: 12px;
-    font-size: 16px; /* Note: originally "px", added a default size of 16px to fix invalid CSS */
+    font-size: 16px;
     letter-spacing: .8px;
     color: #94a3b8;
 }
@@ -109,8 +116,9 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 16px;
     width: 100%;
+    min-height: 0;
     z-index: 2;
 }
 
@@ -118,12 +126,14 @@ body::after {
    LEFT BOOKLET
 ========================= */
 .section-booklet {
-    width: 170px;
+    width: 190px;
     height: 65vh;
+    height: 65dvh;
+    flex-shrink: 0;
     background: rgba(15, 23, 42, .85);
     border: 1px solid rgba(56, 189, 248, .25);
     border-radius: 18px;
-    padding: 15px 12px;
+    padding: 14px 10px;
     backdrop-filter: blur(10px);
     box-shadow: 0 15px 40px rgba(0, 0, 0, .4);
     display: flex;
@@ -133,10 +143,11 @@ body::after {
 }
 
 .section-booklet h3 {
-    font-size: 15px;
+    font-size: 14px;
     color: #38bdf8;
     text-align: center;
-    margin-bottom: 18px;
+    margin: 0 0 12px;
+    flex-shrink: 0;
 }
 
 .section-booklet ul {
@@ -147,11 +158,14 @@ body::after {
 
 .section-booklet li {
     position: relative;
-    padding: 9px 8px 9px 22px;
-    margin-bottom: 4px;
-    font-size: 12px;
-    color: #64748b;
+    padding: 7px 4px 7px 19px;
+    margin-bottom: 2px;
+    font-size: 11.5px;
+    line-height: 1.3;
+    color: #94a3b8;
     transition: .3s;
+    cursor: pointer;
+    overflow-wrap: anywhere;
 }
 
 .section-booklet li::before {
@@ -160,8 +174,8 @@ body::after {
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: #334155;
     transition: .3s;
@@ -169,12 +183,12 @@ body::after {
 
 .section-booklet li.active {
     color: white;
-    transform: translateX(8px);
+    transform: translateX(4px);
 }
 
 .section-booklet li.active::before {
     background: #67e8f9;
-    box-shadow: 0 0 10px #38bdf8, 0 0 25px #38bdf8, 0 0 45px #38bdf8;
+    box-shadow: 0 0 10px #38bdf8, 0 0 25px #38bdf8;
 }
 
 .section-booklet li.active::after {
@@ -192,8 +206,10 @@ body::after {
    ENERGY SCROLL BAR
 ========================= */
 .energy-scroll {
-    width: 45px;
+    width: 40px;
     height: 65vh;
+    height: 65dvh;
+    flex-shrink: 0;
     border-radius: 20px;
     background: rgba(15, 23, 42, .8);
     border: 1px solid rgba(56, 189, 248, .25);
@@ -222,7 +238,7 @@ body::after {
     height: 18%;
     border-radius: 20px;
     background: linear-gradient(180deg, transparent, #67e8f9, #38bdf8, transparent);
-    box-shadow: 0 0 15px #38bdf8, 0 0 35px #38bdf8, 0 0 60px #38bdf8;
+    box-shadow: 0 0 15px #38bdf8, 0 0 35px #38bdf8;
     transition: .35s ease;
     animation: energyGlow 1.5s infinite;
 }
@@ -238,88 +254,203 @@ body::after {
 }
 
 @keyframes energyGlow {
-    0% { filter: brightness(.8); }
-    50% { filter: brightness(1.8); }
-    100% { filter: brightness(.8); }
+    0% {
+        filter: brightness(.8);
+    }
+
+    50% {
+        filter: brightness(1.8);
+    }
+
+    100% {
+        filter: brightness(.8);
+    }
 }
 
 /* =========================
-   MAIN CARD - SECURITY PANEL
+   MAIN CARD
 ========================= */
 .consent-card {
     width: 680px;
     height: 65vh;
+    height: 65dvh;
+    min-width: 0;
+    min-height: 0;
     background: linear-gradient(145deg, #0f172a, #1e293b);
     color: #e2e8f0;
     border-radius: 20px;
     padding: 25px;
     border: 1px solid rgba(56, 189, 248, .35);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, .65), 0 0 35px rgba(56, 189, 248, .2), inset 0 0 40px rgba(15, 23, 42, .8);
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, .65),
+        0 0 35px rgba(56, 189, 248, .2),
+        inset 0 0 40px rgba(15, 23, 42, .8);
+    display: flex;
+    flex-direction: column;
 }
 
 /* =========================
    CARD TITLE
 ========================= */
-.consent-card h2 {
+.consent-card > h2 {
+    flex: 0 0 auto;
     text-align: center;
     margin: 0 0 15px;
     font-size: 22px;
     font-weight: 800;
     letter-spacing: .8px;
+    line-height: 1.35;
     color: #f8fafc;
-    text-shadow: 0 0 8px rgba(56, 189, 248, .6), 0 0 18px rgba(56, 189, 248, .35);
+    text-shadow:
+        0 0 8px rgba(56, 189, 248, .6),
+        0 0 18px rgba(56, 189, 248, .35);
 }
 
 /* =========================
-   CONTENT
+   CONTENT AREA
 ========================= */
 .content-area {
-    height: calc(65vh - 80px);
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
     overflow-y: auto;
-    padding-right: 12px;
-    scrollbar-width: none; /* Firefox */
+    overflow-x: hidden;
+    padding: 0 12px 12px 0;
+    scrollbar-width: none;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* hide scrollbar */
 .content-area::-webkit-scrollbar {
     display: none;
 }
 
-/* 
-   SECTION SPACING 
-   Adjusted so sections are closer together
-*/
+/* =========================
+   PRIVACY SECTIONS
+========================= */
 .content-area section {
-    min-height: 200px;
-    padding-top: 5px;
-    padding-bottom: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    position: relative;
+    min-height: 0;
+    padding: 18px 18px 20px;
+    margin-bottom: 12px;
+    background: linear-gradient(
+        135deg,
+        rgba(247, 248, 250, .94),
+        rgba(255, 255, 255, .82)
+    );
+    border-radius: 14px;
+    border-left: 3px solid #0284c7;
+    box-shadow: 0 5px 15px rgba(15, 23, 42, .08);
+    transition: border-color .3s, box-shadow .3s;
+    overflow-wrap: anywhere;
 }
 
-.content-area h3 {
-    margin-top: 5px;
-    margin-bottom: 8px;
-    font-size: 19px;
-    font-weight: 700;
-    color: #0369a1;
+.content-area section:last-of-type {
+    margin-bottom: 12px;
 }
 
-.content-area p {
-    font-size: 15px;
-    line-height: 1.5;
-    color: #334155;
-    margin-bottom: 8px;
+.content-area section:hover {
+    border-left-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, .2);
 }
 
 /* =========================
-   AGREEMENT - FUTURE SECURITY PANEL
+   SECTION HEADINGS
+========================= */
+.content-area section h3 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: .3px;
+    line-height: 1.4;
+    color: #075985;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.content-area section h3::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    margin-top: 6px;
+    background: #38bdf8;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8;
+    flex: 0 0 9px;
+}
+
+/* =========================
+   SECTION PARAGRAPHS
+========================= */
+.content-area section p {
+    margin: 0 0 10px;
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: #334155;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.content-area section p:last-child {
+    margin-bottom: 0;
+}
+
+.content-area section strong {
+    color: #0f3b59;
+    font-weight: 750;
+}
+
+/* =========================
+   NEW LEGAL INFORMATION
+========================= */
+.content-area section p strong {
+    color: #075985;
+}
+
+.content-area a {
+    color: #0369a1;
+    font-weight: 650;
+    text-decoration: underline;
+    text-decoration-color: rgba(3, 105, 161, .4);
+    text-underline-offset: 3px;
+    overflow-wrap: anywhere;
+    transition: color .2s, text-decoration-color .2s;
+}
+
+.content-area a:hover {
+    color: #0284c7;
+    text-decoration-color: #0284c7;
+}
+
+.content-area section p strong:first-child {
+    font-weight: 800;
+}
+
+.content-area section[data-index="7"] p {
+    line-height: 1.65;
+}
+
+.content-area section[data-index="7"] p strong {
+    color: #075985;
+}
+
+.content-area section p,
+.content-area section h3 {
+    max-width: 100%;
+}
+
+/* =========================
+   AGREEMENT
 ========================= */
 .agreement {
     margin-top: 18px;
     padding: 16px 18px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, .95), rgba(30, 41, 59, .95));
+    background: linear-gradient(
+        135deg,
+        rgba(15, 23, 42, .95),
+        rgba(30, 41, 59, .95)
+    );
     border-radius: 14px;
     border: 1px solid rgba(56, 189, 248, .35);
     display: flex;
@@ -328,12 +459,14 @@ body::after {
     color: #e2e8f0;
     font-size: 13.5px;
     line-height: 1.5;
-    box-shadow: 0 0 20px rgba(56, 189, 248, .15), inset 0 0 25px rgba(56, 189, 248, .08);
+    box-shadow:
+        0 0 20px rgba(56, 189, 248, .15),
+        inset 0 0 25px rgba(56, 189, 248, .08);
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
-/* glowing edge */
 .agreement::before {
     content: "";
     position: absolute;
@@ -345,11 +478,12 @@ body::after {
     box-shadow: 0 0 15px #38bdf8, 0 0 30px #38bdf8;
 }
 
-/* custom checkbox */
 .agreement input {
     appearance: none;
+    -webkit-appearance: none;
     width: 22px;
     height: 22px;
+    margin: 0;
     border-radius: 6px;
     border: 2px solid #38bdf8;
     background: #020617;
@@ -357,13 +491,13 @@ body::after {
     position: relative;
     flex-shrink: 0;
     transition: .3s;
-    accent-color: #0284c7;
 }
 
-/* checked state */
 .agreement input:checked {
     background: #0284c7;
-    box-shadow: 0 0 15px #38bdf8, 0 0 30px rgba(56, 189, 248, .7);
+    box-shadow:
+        0 0 15px #38bdf8,
+        0 0 30px rgba(56, 189, 248, .7);
 }
 
 .agreement input:checked::after {
@@ -374,6 +508,11 @@ body::after {
     font-weight: bold;
     left: 3px;
     top: -1px;
+}
+
+.agreement input:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
 }
 
 .agreement label {
@@ -387,7 +526,7 @@ body::after {
 }
 
 /* =========================
-   SECURITY ACTION BUTTONS
+   ACTION BUTTONS
 ========================= */
 .buttons {
     margin-top: 18px;
@@ -395,26 +534,27 @@ body::after {
     display: flex;
     justify-content: space-between;
     gap: 14px;
+    flex-shrink: 0;
 }
 
 button {
     flex: 1;
+    min-width: 0;
     height: 48px;
     padding: 12px 20px;
     border: none;
-    border-radius: 14px; /* standardized border-radius */
+    border-radius: 14px;
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 1px;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    transition: .3s ease;
+    transition: transform .3s ease, box-shadow .3s ease;
     color: white;
     text-transform: uppercase;
 }
 
-/* animated shine */
 button::before {
     content: "";
     position: absolute;
@@ -422,40 +562,59 @@ button::before {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, .25), transparent);
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255, 255, 255, .25),
+        transparent
+    );
     transition: .5s;
+    pointer-events: none;
 }
 
 button:hover::before {
     left: 100%;
 }
 
+button:focus-visible {
+    outline: 2px solid #67e8f9;
+    outline-offset: 3px;
+}
+
 /* =========================
-   DECLINE
+   DECLINE BUTTON
 ========================= */
 #declineBtn {
     background: linear-gradient(135deg, #450a0a, #b91c1c);
     border: 1px solid rgba(248, 113, 113, .5);
-    box-shadow: 0 0 15px rgba(239, 68, 68, .35), inset 0 0 15px rgba(255, 255, 255, .05);
+    box-shadow:
+        0 0 15px rgba(239, 68, 68, .35),
+        inset 0 0 15px rgba(255, 255, 255, .05);
 }
 
 #declineBtn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 0 30px rgba(239, 68, 68, .7), inset 0 0 20px rgba(255, 255, 255, .1);
+    box-shadow:
+        0 0 30px rgba(239, 68, 68, .7),
+        inset 0 0 20px rgba(255, 255, 255, .1);
 }
 
 /* =========================
-   ACCEPT
+   ACCEPT BUTTON
 ========================= */
 #acceptBtn {
     background: linear-gradient(135deg, #082f49, #0284c7);
     border: 1px solid rgba(56, 189, 248, .6);
-    box-shadow: 0 0 15px rgba(56, 189, 248, .35), inset 0 0 15px rgba(255, 255, 255, .05);
+    box-shadow:
+        0 0 15px rgba(56, 189, 248, .35),
+        inset 0 0 15px rgba(255, 255, 255, .05);
 }
 
 #acceptBtn:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 0 35px rgba(56, 189, 248, .8), inset 0 0 20px rgba(255, 255, 255, .15);
+    box-shadow:
+        0 0 35px rgba(56, 189, 248, .8),
+        inset 0 0 20px rgba(255, 255, 255, .15);
     background: linear-gradient(135deg, #0284c7, #38bdf8);
 }
 
@@ -468,8 +627,41 @@ button:hover::before {
 }
 
 /* =========================
-   MODAL BUTTON
+   MODAL
 ========================= */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    padding: 16px;
+    background: rgba(2, 6, 23, .75);
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    overflow-y: auto;
+}
+
+.modal-card {
+    width: min(400px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 18px;
+    text-align: center;
+    color: #1e293b;
+}
+
+.modal-card h2 {
+    color: #0f172a;
+}
+
+.modal-card p {
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
 .modal-card button {
     margin-top: 20px;
     width: 100%;
@@ -481,122 +673,23 @@ button:hover::before {
 }
 
 /* =========================
-   SECURITY CONTENT DESIGN
-========================= */
-.content-area section {
-    position: relative;
-    padding: 18px 18px 20px;
-    margin-bottom: 12px;
-    background: linear-gradient(135deg, rgba(247, 248, 250, 0.85), rgba(255, 255, 255, 0.65));
-    border-radius: 14px;
-    border-left: 3px solid #0284c7;
-    box-shadow: 0 5px 15px rgba(15, 23, 42, .08);
-    transition: .3s;
-}
-
-/* section hover */
-.content-area section:hover {
-    transform: translateX(5px);
-    border-left-color: #38bdf8;
-    box-shadow: 0 0 20px rgba(56, 189, 248, .25);
-}
-
-/* title */
-.content-area h3 {
-    margin: 0 0 12px;
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: .5px;
-    color: #075985;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* small security indicator */
-.content-area h3::before {
-    content: "";
-    width: 9px;
-    height: 9px;
-    background: #38bdf8;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #38bdf8, 0 0 20px #38bdf8;
-}
-
-/* paragraph */
-.content-area p {
-    margin: 0 0 10px;
-    font-size: 14.5px;
-    line-height: 1.65;
-    color: #334155;
-}
-
-.content-area p:last-child {
-    margin-bottom: 0;
-}
-
-/* =========================
-   MODAL
-========================= */
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(2, 6, 23, .75);
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-}
-
-.modal-card {
-    width: 400px;
-    background: white;
-    padding: 30px;
-    border-radius: 18px;
-    text-align: center;
-    color: #1e293b;
-}
-
-.modal-card button {
-    margin-top: 20px;
-    background: #0284c7;
-    color: white;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media(max-width: 1100px) {
-    .section-booklet,
-    .energy-scroll {
-        display: none;
-    }
-}
-
-@media(max-width: 800px) {
-    .system-name h1 {
-        font-size: 22px;
-    }
-    .consent-card {
-        width: 90%;
-    }
-    .content-area p {
-        font-size: 14px;
-    }
-}
-
-/* =========================
-   PAGE TRANSITION EFFECT
+   PAGE TRANSITION
 ========================= */
 #pageTransition {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at center, rgba(56, 189, 248, .35), #020617 70%);
+    background: radial-gradient(
+        circle at center,
+        rgba(56, 189, 248, .35),
+        #020617 70%
+    );
     z-index: 999;
     opacity: 0;
     pointer-events: none;
     transform: scale(0);
-    transition: opacity .6s ease, transform .8s cubic-bezier(.77, 0, .18, 1);
+    transition:
+        opacity .6s ease,
+        transform .8s cubic-bezier(.77, 0, .18, 1);
 }
 
 #pageTransition.active {
@@ -604,7 +697,6 @@ button:hover::before {
     transform: scale(1);
 }
 
-/* blue scanning flash */
 #pageTransition::after {
     content: "";
     position: absolute;
@@ -621,14 +713,12 @@ button:hover::before {
     from {
         transform: translateX(-100%);
     }
+
     to {
         transform: translateX(100%);
     }
 }
 
-/* =========================
-   PAGE TRANSITION
-========================= */
 body.page-exit {
     animation: pageExit .8s ease forwards;
 }
@@ -638,218 +728,309 @@ body.page-exit {
         opacity: 1;
         transform: scale(1);
     }
+
     100% {
         opacity: 0;
         transform: scale(1.08);
     }
 }
-.modal{
-    padding:16px;
-    box-sizing:border-box;
-    overflow-y:auto;
-}
 
-.modal-card{
-    width:min(400px,100%);
-    max-height:100%;
-    overflow-y:auto;
-}
-
-@media (max-width:800px),(max-height:560px){
-    body{
-        height:100vh;
-        height:100dvh;
-        justify-content:flex-start;
+/* =========================
+   TABLET AND SMALL DESKTOP
+========================= */
+@media (max-width: 1100px) {
+    .section-booklet,
+    .energy-scroll {
+        display: none;
     }
 
-    .system-name{
-        flex:0 0 auto;
-        width:100%;
-        margin-bottom:12px;
-        padding:16px 16px 0;
+    .consent-container {
+        padding-left: 18px;
+        padding-right: 18px;
     }
 
-    .system-name h1{
-        font-size:22px;
-    }
-
-    .system-name h1::after{
-        width:120px;
-        margin-top:10px;
-    }
-
-    .consent-container{
-        flex:1 1 auto;
-        min-height:0;
-        align-items:stretch;
-        padding:0 12px 14px;
-    }
-
-    .consent-card{
-        display:flex;
-        flex-direction:column;
-        width:100%;
-        max-width:680px;
-        height:auto;
-        min-height:0;
-        padding:18px 16px;
-    }
-
-    .consent-card h2{
-        flex:0 0 auto;
-        margin-bottom:12px;
-        font-size:19px;
-        line-height:1.3;
-    }
-
-    .content-area{
-        flex:1 1 auto;
-        height:auto;
-        min-height:0;
-        padding-right:4px;
-        overscroll-behavior:contain;
-        -webkit-overflow-scrolling:touch;
-    }
-
-    .content-area section{
-        min-height:0;
-        padding:16px 14px 18px;
-    }
-
-    .content-area h3{
-        font-size:16.5px;
-    }
-
-    .content-area p{
-        font-size:14px;
-        line-height:1.6;
-    }
-
-    .agreement{
-        padding:14px;
-        font-size:13.5px;
-    }
-
-    .agreement label{
-        flex:1;
-    }
-
-    .buttons{
-        margin-top:14px;
+    .consent-card {
+        width: min(680px, 100%);
     }
 }
 
-@media (max-width:480px){
-    .system-name h1{
-        font-size:19px;
+/* =========================
+   RESPONSIVE LAYOUT
+========================= */
+@media (max-width: 800px), (max-height: 560px) {
+    body {
+        justify-content: flex-start;
     }
 
-    .consent-container{
-        padding:0 8px 10px;
+    .system-name {
+        flex: 0 0 auto;
+        width: 100%;
+        margin-bottom: 12px;
+        padding: 16px 16px 0;
     }
 
-    .consent-card{
-        padding:16px 12px;
-        border-radius:16px;
+    .system-name h1 {
+        font-size: 22px;
     }
 
-    .consent-card h2{
-        font-size:17px;
+    .system-name h1::after {
+        width: 120px;
+        margin-top: 10px;
     }
 
-    .content-area section{
-        padding:14px 12px 16px;
+    .consent-container {
+        flex: 1 1 auto;
+        min-height: 0;
+        align-items: stretch;
+        padding: 0 12px 14px;
     }
 
-    .content-area h3{
-        font-size:15.5px;
+    .consent-card {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 680px;
+        height: auto;
+        min-height: 0;
+        padding: 18px 16px;
+        margin: 0 auto;
     }
 
-    .content-area p{
-        font-size:13.5px;
+    .consent-card > h2 {
+        flex: 0 0 auto;
+        margin-bottom: 12px;
+        font-size: 19px;
+        line-height: 1.3;
     }
 
-    .buttons{
-        flex-direction:column-reverse;
-        gap:10px;
+    .content-area {
+        flex: 1 1 auto;
+        height: auto;
+        min-height: 0;
+        padding-right: 4px;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
     }
 
-    button{
-        flex:0 0 auto;
-        width:100%;
-        height:46px;
-        font-size:13px;
+    .content-area section {
+        min-height: 0;
+        padding: 16px 14px 18px;
     }
 
-    .modal-card{
-        padding:22px 18px;
-    }
-}
-
-@media (max-width:360px){
-    .system-name h1{
-        font-size:17px;
+    .content-area section h3 {
+        font-size: 16.5px;
     }
 
-    .agreement{
-        gap:10px;
-        font-size:13px;
-    }
-}
-
-@media (max-height:560px){
-    .system-name{
-        margin-bottom:6px;
-        padding-top:8px;
+    .content-area section p {
+        font-size: 14px;
+        line-height: 1.6;
     }
 
-    .system-name h1{
-        font-size:17px;
+    .section-booklet {
+        width: 190px;
     }
 
-    .system-name h1::after{
-        display:none;
+    .section-booklet h3 {
+        font-size: 13px;
     }
 
-    .consent-container{
-        padding-bottom:8px;
+    .section-booklet li {
+        font-size: 11px;
+        padding-top: 6px;
+        padding-bottom: 6px;
     }
 
-    .consent-card{
-        padding:12px 16px;
+    .agreement {
+        padding: 14px;
+        font-size: 13.5px;
     }
 
-    .consent-card h2{
-        margin-bottom:8px;
-        font-size:16px;
+    .agreement label {
+        flex: 1;
     }
 
-    .agreement{
-        margin-top:10px;
-        padding:10px 14px;
-    }
-
-    .buttons{
-        flex-direction:row;
-        margin-top:10px;
-    }
-
-    button{
-        flex:1;
-        width:auto;
-        height:40px;
+    .buttons {
+        margin-top: 14px;
     }
 }
 
-@media (hover:none){
-    .content-area section:hover{
-        transform:none;
-        border-left-color:#0284c7;
-        box-shadow:0 5px 15px rgba(15,23,42,.08);
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 480px) {
+    .system-name h1 {
+        font-size: 19px;
+    }
+
+    .consent-container {
+        padding: 0 8px 10px;
+    }
+
+    .consent-card {
+        padding: 16px 12px;
+        border-radius: 16px;
+    }
+
+    .consent-card > h2 {
+        font-size: 17px;
+    }
+
+    .content-area section {
+        padding: 14px 12px 16px;
+    }
+
+    .content-area section h3 {
+        font-size: 15.5px;
+    }
+
+    .content-area section p {
+        font-size: 13.5px;
+        line-height: 1.6;
+    }
+
+    .agreement {
+        gap: 10px;
+        font-size: 13px;
+    }
+
+    .buttons {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    button {
+        flex: 0 0 auto;
+        width: 100%;
+        height: 46px;
+        font-size: 13px;
+    }
+
+    .modal-card {
+        padding: 22px 18px;
+    }
+}
+
+/* =========================
+   VERY SMALL SCREENS
+========================= */
+@media (max-width: 360px) {
+    .system-name h1 {
+        font-size: 17px;
+    }
+
+    .consent-card {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .agreement {
+        gap: 10px;
+        font-size: 12.5px;
+    }
+
+    .content-area section {
+        padding: 13px 10px 15px;
+    }
+
+    .content-area section h3 {
+        font-size: 15px;
+    }
+
+    .content-area section p {
+        font-size: 13px;
+    }
+}
+
+/* =========================
+   SHORT SCREENS
+========================= */
+@media (max-height: 560px) {
+    .system-name {
+        margin-bottom: 6px;
+        padding-top: 8px;
+    }
+
+    .system-name h1 {
+        font-size: 17px;
+    }
+
+    .system-name h1::after {
+        display: none;
+    }
+
+    .consent-container {
+        padding-bottom: 8px;
+    }
+
+    .consent-card {
+        padding: 12px 16px;
+    }
+
+    .consent-card > h2 {
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+
+    .content-area section {
+        padding-top: 12px;
+        padding-bottom: 14px;
+    }
+
+    .content-area section h3 {
+        margin-bottom: 8px;
+    }
+
+    .content-area section p {
+        margin-bottom: 8px;
+    }
+
+    .agreement {
+        margin-top: 10px;
+        padding: 10px 14px;
+    }
+
+    .buttons {
+        flex-direction: row;
+        margin-top: 10px;
+    }
+
+    button {
+        flex: 1;
+        width: auto;
+        height: 40px;
+    }
+}
+
+/* =========================
+   TOUCH DEVICES
+========================= */
+@media (hover: none) {
+    .content-area section:hover {
+        border-left-color: #0284c7;
+        box-shadow: 0 5px 15px rgba(15, 23, 42, .08);
     }
 
     #declineBtn:hover,
-    #acceptBtn:hover:not(:disabled){
-        transform:none;
+    #acceptBtn:hover:not(:disabled) {
+        transform: none;
+    }
+}
+
+/* =========================
+   REDUCED MOTION
+========================= */
+@media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after,
+    .energy-thumb,
+    #pageTransition::after {
+        animation: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
     }
 }

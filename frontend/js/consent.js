@@ -1,6 +1,12 @@
+
 const contentArea = document.getElementById("contentArea");
-const sections = document.querySelectorAll(".content-area section");
-const menuItems = document.querySelectorAll(".section-booklet li");
+const sections = Array.from(
+    document.querySelectorAll(".content-area section")
+);
+const menuItems = Array.from(
+    document.querySelectorAll(".section-booklet li")
+);
+
 const energyScroll = document.querySelector(".energy-scroll");
 const energyTrack = document.querySelector(".energy-track");
 const energyThumb = document.getElementById("energyThumb");
@@ -14,16 +20,12 @@ function updateSection() {
         return;
     }
 
+    const containerTop = contentArea.getBoundingClientRect().top;
     let current = 0;
 
-    const containerTop =
-        contentArea.getBoundingClientRect().top;
-
     sections.forEach((section, index) => {
-
         const sectionTop =
-            section.getBoundingClientRect().top -
-            containerTop;
+            section.getBoundingClientRect().top - containerTop;
 
         if (sectionTop <= 180) {
             current = index;
@@ -36,48 +38,33 @@ function updateSection() {
 
 
 // =========================
-// LEFT LIGHT
+// LEFT MENU ACTIVE STATE
 // =========================
 function updateLeft(index) {
-
-    if (!menuItems.length) {
-        return;
-    }
-
     menuItems.forEach((item, i) => {
-
-        item.classList.toggle(
-            "active",
-            i === index
-        );
+        item.classList.toggle("active", i === index);
     });
 }
 
 
 // =========================
-// ENERGY CORE
+// ENERGY SCROLL INDICATOR
 // =========================
 function updateEnergy(index) {
-
     if (!energyThumb) {
         return;
     }
 
-    const total =
-        sections.length - 1;
+    const total = sections.length - 1;
 
     if (total <= 0) {
-
         energyThumb.style.top = "0%";
-
         return;
     }
 
-    const movement =
-        (index / total) * 80;
+    const movement = (index / total) * 80;
 
-    energyThumb.style.top =
-        movement + "%";
+    energyThumb.style.top = movement + "%";
 }
 
 
@@ -85,98 +72,69 @@ function updateEnergy(index) {
 // SCROLL CONTENT
 // =========================
 if (contentArea) {
-
-    contentArea.addEventListener(
-        "scroll",
-        updateSection
-    );
+    contentArea.addEventListener("scroll", updateSection, {
+        passive: true
+    });
 }
 
 
 // =========================
 // CLICK LEFT MENU
 // =========================
-if (
-    menuItems.length &&
-    sections.length
-) {
+menuItems.forEach((item, index) => {
+    item.addEventListener("click", () => {
+        const targetSection = sections[index];
 
-    menuItems.forEach((item, index) => {
+        if (!targetSection || !contentArea) {
+            return;
+        }
 
-        item.addEventListener(
-            "click",
-            () => {
+        const sectionTop =
+            targetSection.getBoundingClientRect().top -
+            contentArea.getBoundingClientRect().top +
+            contentArea.scrollTop;
 
-                if (!sections[index]) {
-                    return;
-                }
-
-                sections[index].scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
-            }
-        );
+        contentArea.scrollTo({
+            top: Math.max(0, sectionTop),
+            behavior: "smooth"
+        });
     });
-}
+});
 
 
 // =========================
 // CLICK ENERGY TRACK
 // =========================
-if (
-    energyTrack &&
-    contentArea
-) {
-
-    energyTrack.addEventListener(
-        "click",
-        (event) => {
-
-            if (
-                energyThumb &&
-                event.target === energyThumb
-            ) {
-                return;
-            }
-
-            const rect =
-                energyTrack.getBoundingClientRect();
-
-            if (rect.height <= 0) {
-                return;
-            }
-
-            const clickPosition =
-                event.clientY - rect.top;
-
-            let percentage =
-                clickPosition / rect.height;
-
-            percentage =
-                Math.max(
-                    0,
-                    Math.min(
-                        percentage,
-                        1
-                    )
-                );
-
-            const maxScroll =
-                contentArea.scrollHeight -
-                contentArea.clientHeight;
-
-            if (maxScroll <= 0) {
-                return;
-            }
-
-            contentArea.scrollTo({
-                top:
-                    percentage * maxScroll,
-                behavior: "smooth"
-            });
+if (energyTrack && contentArea) {
+    energyTrack.addEventListener("click", (event) => {
+        if (event.target === energyThumb) {
+            return;
         }
-    );
+
+        const rect = energyTrack.getBoundingClientRect();
+
+        if (rect.height <= 0) {
+            return;
+        }
+
+        const clickPosition = event.clientY - rect.top;
+        const percentage = Math.max(
+            0,
+            Math.min(clickPosition / rect.height, 1)
+        );
+
+        const maxScroll =
+            contentArea.scrollHeight - contentArea.clientHeight;
+
+        if (maxScroll <= 0) {
+            return;
+        }
+
+        contentArea.scrollTo({
+            top: percentage * maxScroll,
+            behavior: "smooth"
+        });
+    });
 }
 
 
@@ -186,190 +144,135 @@ if (
 let isDragging = false;
 
 if (energyThumb) {
+    energyThumb.addEventListener("mousedown", (event) => {
+        isDragging = true;
+        event.preventDefault();
+    });
 
-    energyThumb.addEventListener(
-        "mousedown",
-        (event) => {
-
-            isDragging = true;
-
-            event.preventDefault();
-        }
-    );
+    energyThumb.addEventListener("touchstart", () => {
+        isDragging = true;
+    }, {
+        passive: true
+    });
 }
 
 
-document.addEventListener(
-    "mousemove",
-    (event) => {
-
-        if (
-            !isDragging ||
-            !energyTrack ||
-            !energyThumb ||
-            !contentArea
-        ) {
-            return;
-        }
-
-        const rect =
-            energyTrack.getBoundingClientRect();
-
-        let position =
-            event.clientY - rect.top;
-
-        const thumbHeight =
-            energyThumb.offsetHeight;
-
-        const minPosition = 0;
-
-        const maxPosition =
-            rect.height - thumbHeight;
-
-        if (maxPosition <= 0) {
-            return;
-        }
-
-        position =
-            Math.max(
-                minPosition,
-                Math.min(
-                    position,
-                    maxPosition
-                )
-            );
-
-        const percentage =
-            position / maxPosition;
-
-        const maxScroll =
-            contentArea.scrollHeight -
-            contentArea.clientHeight;
-
-        if (maxScroll <= 0) {
-            return;
-        }
-
-        contentArea.scrollTop =
-            percentage * maxScroll;
+function moveEnergyThumb(clientY) {
+    if (
+        !isDragging ||
+        !energyTrack ||
+        !energyThumb ||
+        !contentArea
+    ) {
+        return;
     }
-);
 
+    const rect = energyTrack.getBoundingClientRect();
+    const thumbHeight = energyThumb.offsetHeight;
+    const maxPosition = rect.height - thumbHeight;
 
-document.addEventListener(
-    "mouseup",
-    () => {
-
-        isDragging = false;
+    if (maxPosition <= 0) {
+        return;
     }
-);
 
+    let position = clientY - rect.top - thumbHeight / 2;
 
-// =========================
-// PREVENT DRAG STICKING
-// =========================
-document.addEventListener(
-    "mouseleave",
-    () => {
+    position = Math.max(
+        0,
+        Math.min(position, maxPosition)
+    );
 
-        isDragging = false;
+    const percentage = position / maxPosition;
+    const maxScroll =
+        contentArea.scrollHeight - contentArea.clientHeight;
+
+    if (maxScroll <= 0) {
+        return;
     }
-);
+
+    contentArea.scrollTop = percentage * maxScroll;
+}
+
+
+document.addEventListener("mousemove", (event) => {
+    moveEnergyThumb(event.clientY);
+});
+
+document.addEventListener("touchmove", (event) => {
+    if (isDragging && event.touches.length > 0) {
+        moveEnergyThumb(event.touches[0].clientY);
+    }
+}, {
+    passive: true
+});
+
+
+function stopDragging() {
+    isDragging = false;
+}
+
+document.addEventListener("mouseup", stopDragging);
+document.addEventListener("touchend", stopDragging);
+document.addEventListener("touchcancel", stopDragging);
+window.addEventListener("blur", stopDragging);
 
 
 // =========================
 // FIRST LOAD
 // =========================
-window.addEventListener(
-    "load",
-    () => {
+function initializeConsentPage() {
+    updateSection();
 
-        updateSection();
+    if (contentArea) {
+        contentArea.scrollTop = 0;
+
+        requestAnimationFrame(() => {
+            updateSection();
+        });
     }
-);
+}
+
+if (document.readyState === "complete") {
+    initializeConsentPage();
+} else {
+    window.addEventListener("load", initializeConsentPage, {
+        once: true
+    });
+}
 
 
 // =========================
 // CONSENT CHECKBOX
 // =========================
-const checkbox =
-    document.getElementById(
-        "consentCheckbox"
-    );
+const checkbox = document.getElementById("consentCheckbox");
+const acceptBtn = document.getElementById("acceptBtn");
 
-const acceptBtn =
-    document.getElementById(
-        "acceptBtn"
-    );
+if (checkbox && acceptBtn) {
+    acceptBtn.disabled = !checkbox.checked;
 
-
-if (
-    checkbox &&
-    acceptBtn
-) {
-
-    acceptBtn.disabled =
-        !checkbox.checked;
-
-    checkbox.addEventListener(
-        "change",
-        () => {
-
-            acceptBtn.disabled =
-                !checkbox.checked;
-        }
-    );
+    checkbox.addEventListener("change", () => {
+        acceptBtn.disabled = !checkbox.checked;
+    });
 }
 
 
 // =========================
 // DECLINE MODAL
 // =========================
-const declineBtn =
-    document.getElementById(
-        "declineBtn"
-    );
+const declineBtn = document.getElementById("declineBtn");
+const modal = document.getElementById("declineModal");
+const closeModal = document.getElementById("closeModal");
 
-const modal =
-    document.getElementById(
-        "declineModal"
-    );
-
-const closeModal =
-    document.getElementById(
-        "closeModal"
-    );
-
-
-if (
-    declineBtn &&
-    modal
-) {
-
-    declineBtn.addEventListener(
-        "click",
-        () => {
-
-            modal.style.display =
-                "flex";
-        }
-    );
+if (declineBtn && modal) {
+    declineBtn.addEventListener("click", () => {
+        modal.style.display = "flex";
+    });
 }
 
-
-if (
-    closeModal &&
-    modal
-) {
-
-    closeModal.addEventListener(
-        "click",
-        () => {
-
-            modal.style.display =
-                "none";
-        }
-    );
+if (closeModal && modal) {
+    closeModal.addEventListener("click", () => {
+        modal.style.display = "none";
+    });
 }
 
 
@@ -377,64 +280,39 @@ if (
 // CLOSE MODAL WHEN CLICKING OUTSIDE
 // =========================
 if (modal) {
-
-    modal.addEventListener(
-        "click",
-        (event) => {
-
-            if (
-                event.target === modal
-            ) {
-
-                modal.style.display =
-                    "none";
-            }
+    modal.addEventListener("click", (event) => {
+        if (event.target === modal) {
+            modal.style.display = "none";
         }
-    );
+    });
 }
 
 
 // =========================
-// ACCEPT
+// CLOSE MODAL WITH ESCAPE
+// =========================
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal) {
+        modal.style.display = "none";
+    }
+});
+
+
+// =========================
+// ACCEPT CONSENT
 // =========================
 if (acceptBtn) {
-
-    acceptBtn.addEventListener(
-        "click",
-        () => {
-
-            if (acceptBtn.disabled) {
-                return;
-            }
-
-            localStorage.setItem(
-                "consentAccepted",
-                "true"
-            );
-
-            document.body.classList.add(
-                "page-exit"
-            );
-
-            setTimeout(
-                () => {
-
-                    window.location.replace(
-                        "initialTest.html"
-                    );
-
-                },
-                800
-            );
+    acceptBtn.addEventListener("click", () => {
+        if (acceptBtn.disabled) {
+            return;
         }
-    );
+
+        localStorage.setItem("consentAccepted", "true");
+
+        document.body.classList.add("page-exit");
+
+        window.setTimeout(() => {
+            window.location.replace("initialTest.html");
+        }, 800);
+    });
 }
-
-
-// =========================
-// DISABLE BF CACHE
-// =========================
-window.addEventListener(
-    "unload",
-    () => {}
-);
