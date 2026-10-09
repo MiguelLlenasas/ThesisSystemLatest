@@ -13,6 +13,11 @@
 (function (root) {
 
     const exact = {
+        /* ===== classification rationale (server.js) ===== */
+        "Classified as DICTIONARY due to recognizable words": "Inuri bilang DICTIONARY dahil sa mga kilalang salita",
+        "Leetspeak, Sequential pattern, or mixing words with numbers leads to Rule-Based Vulnerability.": "Ang Leetspeak, sunud-sunod na pattern, o paghahalo ng mga salita at numero ay humahantong sa Rule-Based Vulnerability.",
+        "Classified as BRUTE-FORCE due to no dictionary words.": "Inuri bilang BRUTE-FORCE dahil walang salita sa diksyunaryo.",
+
         /* ===== page text (HTML files) + updated server text ===== */
         "Consider enabling Multi-Factor Authentication (MFA) to add an extra verification step if someone discovers your password.": "Pag-isipang i-enable ang Multi-Factor Authentication (MFA) para magkaroon ng dagdag na hakbang sa beripikasyon kung may makatuklas ng iyong password.",
         "Consider using a password manager to create and store unique passwords for each account, helping you avoid reusing passwords.": "Pag-isipang gumamit ng password manager para gumawa at mag-imbak ng natatanging password sa bawat account, para maiwasan ang muling paggamit ng parehong password.",
@@ -548,6 +553,8 @@
         .replace(/, and /g, ", at ");
 
     const patterns = [
+        [/^Classification result: (.+)\.$/, 'Resulta ng klasipikasyon: $1.'],
+
 
         /* recommendations with changing parts */
         [/^A passphrase like ["“](.+)["”] - made from unrelated words - creates a much less predictable password\.$/, 'Ang passphrase na tulad ng "$1" - na binuo mula sa mga salitang walang kaugnayan sa isa\'t isa - ay lumilikha ng password na mas hindi mahulaan.'],

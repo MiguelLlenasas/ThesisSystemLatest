@@ -922,14 +922,14 @@ function explainClassification(extractedFeatures, vulnerabilityType) {
     let classification_rationale;
 
     if (vulnerabilityType === "DICTIONARY") {
-        classification_rationale = `Classified as DICTIONARY due to recognizable words`;
-    } else if (vulnerabilityType === "RULE-BASED") {
-        classification_rationale = `Leetspeak, Sequential pattern, or mixing words with numbers leads to Rule-Based Vulnerability.`;
-    } else if (vulnerabilityType === "BRUTE-FORCE") {
-        classification_rationale = `Classified as BRUTE-FORCE due to no dictionary words.`;
-    } else {
-        classification_rationale = `Classification result: ${vulnerabilityType}.`;
-    }
+    classification_rationale = `Classified as DICTIONARY due to recognizable words`;
+} else if (vulnerabilityType === "RULE-BASED") {
+    classification_rationale = `Leetspeak, Sequential pattern, or mixing words with numbers leads to Rule-Based Vulnerability.`;
+} else if (vulnerabilityType === "BRUTE-FORCE") {
+    classification_rationale = `Classified as BRUTE-FORCE due to no dictionary words.`;
+} else {
+    classification_rationale = `Classification result: ${vulnerabilityType}.`;
+}
 
     return { feature_checklist, classification_rationale };
 }
