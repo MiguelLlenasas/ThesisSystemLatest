@@ -1009,6 +1009,7 @@ function buildManualDecisionPath(extractedFeatures, finalLabel) {
     return node;
 }
 
+app.get('/health', (req, res) => res.sendStatus(200));
 // ===== API ROUTE =====
 app.post('/analyze', (req, res) => {
     const { password, previousPassword } = req.body;

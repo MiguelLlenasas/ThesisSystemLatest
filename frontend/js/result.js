@@ -1,6 +1,5 @@
-fetch("https://thesissystemlatest.onrender.com/analyze", {
-    method: "HEAD"
-}).catch(() => {});
+// result.js
+fetch("https://thesissystemlatest.onrender.com/health", { method: "HEAD" }).catch(() => {});
 
 
 async function analyzePassword(password, previousPassword) {

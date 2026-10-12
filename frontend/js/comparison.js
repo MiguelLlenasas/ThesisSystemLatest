@@ -1,4 +1,4 @@
-fetch("https://thesissystemlatest.onrender.com/analyze", { method: "HEAD" }).catch(() => {});
+fetch("https://thesissystemlatest.onrender.com/health", { method: "HEAD" }).catch(() => {});
 console.log("Comparison JS Connected");
 
 function getComparisonElements() {

@@ -1,5 +1,5 @@
 // COMPARISON TEST PAGE - comparisonTest.js
-fetch("https://thesissystemlatest.onrender.com/analyze", { method: "HEAD" }).catch(() => {});
+fetch("https://thesissystemlatest.onrender.com/health", { method: "HEAD" }).catch(() => {});
 // PASSWORD VISIBILITY TOGGLE
 const passwordInput = document.getElementById("comparePasswordInput");
 const togglePassword = document.getElementById("togglePassword");
