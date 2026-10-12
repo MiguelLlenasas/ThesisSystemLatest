@@ -316,3 +316,310 @@ if (acceptBtn) {
         }, 800);
     });
 }
+
+
+/* =========================================================
+   LANGUAGE SWITCHER - CONSENT PAGE PLACEMENT (RESPONSIVE)
+
+   Wider than 1100px:
+       stays where i18n.js puts it (floating, top-right).
+
+   1100px or narrower, OR 560px tall or shorter
+   (phones, tablets, short landscape screens):
+       moves into its own row above the system title, so it
+       never covers the title or the consent card.
+
+   Full language names are always shown:
+       "English" / "Filipino (Tagalog)"
+   ========================================================= */
+
+const CONSENT_SWITCHER_QUERY =
+    "(max-width: 1100px), (max-height: 560px)";
+
+let consentSwitcher = null;
+let consentSwitcherOriginalParent = null;
+let consentSwitcherOriginalNextSibling = null;
+let consentSwitcherOriginalClasses = null;
+
+let consentLangRow = null;
+let consentSwitcherMediaBound = false;
+
+
+function injectConsentSwitcherStyles() {
+
+    if (document.getElementById("consentSwitcherStyles")) {
+        return;
+    }
+
+    const style = document.createElement("style");
+
+    style.id = "consentSwitcherStyles";
+
+    style.textContent = `
+
+        /* ---------- Row that holds the switcher ---------- */
+
+        .consent-lang-row {
+            position: relative;
+            z-index: 3;
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 680px;
+            min-width: 0;
+            padding: 10px 12px 0;
+            box-sizing: border-box;
+        }
+
+        .consent-lang-row .i18n-switcher.i18n-in-consent {
+            position: static;
+            top: auto;
+            right: auto;
+            z-index: auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            max-width: none;
+            min-width: 0;
+            min-height: 42px;
+            margin: 0;
+            padding: 0 14px;
+            gap: 10px;
+            box-sizing: border-box;
+        }
+
+        .consent-lang-row .i18n-in-consent select {
+            flex: 1 1 auto;
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            /* 16px stops iPhones from zooming in when tapped */
+            font-size: 16px;
+            padding: 8px 22px 8px 0;
+            text-overflow: ellipsis;
+        }
+
+        /* ---------- Small phones ---------- */
+
+        @media (max-width: 400px) {
+
+            .consent-lang-row {
+                padding: 8px 8px 0;
+            }
+
+            .consent-lang-row .i18n-switcher.i18n-in-consent {
+                min-height: 40px;
+                padding: 0 12px;
+                gap: 8px;
+            }
+        }
+
+        /* ---------- Short screens (phones held sideways) ---------- */
+
+        @media (max-height: 560px) {
+
+            .consent-lang-row {
+                justify-content: flex-end;
+                max-width: 100%;
+                padding: 6px 12px 0;
+            }
+
+            .consent-lang-row .i18n-switcher.i18n-in-consent {
+                width: auto;
+                min-height: 32px;
+                padding: 0 10px;
+                gap: 6px;
+            }
+
+            .consent-lang-row .i18n-in-consent select {
+                width: auto;
+                font-size: 13px;
+                padding: 3px 20px 3px 0;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+
+/*
+ * Puts the switcher in the right place for the current screen
+ * size. Safe to call again every time the size changes.
+ */
+function layoutConsentLanguageSwitcher() {
+
+    const switcher = consentSwitcher;
+
+    if (!switcher) {
+        return;
+    }
+
+    const compact =
+        window.matchMedia(CONSENT_SWITCHER_QUERY).matches;
+
+    if (compact) {
+
+        /* Phones / tablets / short screens: own row above the title. */
+        if (!consentLangRow) {
+
+            consentLangRow = document.createElement("div");
+            consentLangRow.className = "consent-lang-row";
+
+            const systemName = document.querySelector(".system-name");
+
+            if (systemName && systemName.parentNode) {
+
+                systemName.parentNode.insertBefore(
+                    consentLangRow,
+                    systemName
+                );
+
+            } else {
+
+                document.body.insertBefore(
+                    consentLangRow,
+                    document.body.firstChild
+                );
+
+            }
+
+        }
+
+        switcher.classList.remove("i18n-floating");
+        switcher.classList.add("i18n-in-consent");
+
+        if (switcher.parentNode !== consentLangRow) {
+            consentLangRow.appendChild(switcher);
+        }
+
+    } else {
+
+        /* Desktop: put it back exactly where i18n.js placed it. */
+        switcher.classList.remove("i18n-in-consent");
+
+        const originalParent =
+            consentSwitcherOriginalParent || document.body;
+
+        if (switcher.parentNode !== originalParent) {
+
+            if (
+                consentSwitcherOriginalNextSibling &&
+                consentSwitcherOriginalNextSibling.parentNode ===
+                    originalParent
+            ) {
+
+                originalParent.insertBefore(
+                    switcher,
+                    consentSwitcherOriginalNextSibling
+                );
+
+            } else {
+
+                originalParent.appendChild(switcher);
+
+            }
+
+        }
+
+        switcher.className =
+            consentSwitcherOriginalClasses || "i18n-switcher i18n-floating";
+
+        if (consentLangRow) {
+
+            consentLangRow.remove();
+
+            consentLangRow = null;
+
+        }
+
+    }
+
+}
+
+
+function bindConsentSwitcherMedia() {
+
+    if (consentSwitcherMediaBound) {
+        return;
+    }
+
+    consentSwitcherMediaBound = true;
+
+    const mq = window.matchMedia(CONSENT_SWITCHER_QUERY);
+
+    const onChange = () => {
+        layoutConsentLanguageSwitcher();
+    };
+
+    if (mq.addEventListener) {
+        mq.addEventListener("change", onChange);
+    } else if (mq.addListener) {
+        mq.addListener(onChange);
+    }
+}
+
+
+/*
+ * i18n.js builds the switcher on its own schedule, so this may
+ * run before the switcher exists. Wait for it if needed.
+ */
+function waitForConsentSwitcher(callback) {
+
+    const existing = document.querySelector(".i18n-switcher");
+
+    if (existing) {
+        callback(existing);
+        return;
+    }
+
+    const observer = new MutationObserver(() => {
+
+        const found = document.querySelector(".i18n-switcher");
+
+        if (found) {
+
+            observer.disconnect();
+
+            callback(found);
+
+        }
+
+    });
+
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
+
+    /* Stop watching after 10 seconds so it never runs forever. */
+    window.setTimeout(() => {
+        observer.disconnect();
+    }, 10000);
+}
+
+
+function initializeConsentLanguageSwitcher() {
+
+    injectConsentSwitcherStyles();
+
+    bindConsentSwitcherMedia();
+
+    waitForConsentSwitcher(switcher => {
+
+        consentSwitcher = switcher;
+
+        /* Remember where i18n.js placed it. */
+        consentSwitcherOriginalParent = switcher.parentNode;
+        consentSwitcherOriginalNextSibling = switcher.nextSibling;
+        consentSwitcherOriginalClasses = switcher.className;
+
+        layoutConsentLanguageSwitcher();
+
+    });
+}
+
+
+initializeConsentLanguageSwitcher();
