@@ -97,19 +97,62 @@ function readCachedOriginalResult(password) {
 }
 
 
+/* =============================================================
+   HISTORY / PAGE ACCESS PROTECTION
+   - consumePageAccess(): reads and ALWAYS removes the single-use
+     token that the previous page set right before navigating here.
+   - redirectToInitialTest(): the one and only redirect used by the
+     load guard and the pageshow handler, so they never double-fire.
+   ============================================================= */
+
+let redirectingToInitial = false;
+
+
+function consumePageAccess(expectedTarget) {
+
+    const token = sessionStorage.getItem("pageAccess");
+
+    sessionStorage.removeItem("pageAccess");
+
+    return token === expectedTarget;
+}
+
+
+function redirectToInitialTest() {
+
+    if (redirectingToInitial) {
+        return;
+    }
+
+    redirectingToInitial = true;
+
+    document.documentElement.style.display = "none";
+
+    window.location.replace("initialTest.html");
+}
+
+
 function guardResultPageAccess() {
 
     const navigation = performance.getEntriesByType("navigation")[0];
 
     const analyzedPassword = localStorage.getItem("analyzedPassword");
 
+    // Always consume the token, even when the visit is rejected.
+    const hasAccessToken = consumePageAccess("result");
+
     if (
         navigation?.type === "reload" ||
         navigation?.type === "back_forward" ||
-        !analyzedPassword
+        !analyzedPassword ||
+        !hasAccessToken
     ) {
-        window.location.replace("initialTest.html");
+        redirectToInitialTest();
+
+        return false;
     }
+
+    return true;
 }
 
 
@@ -539,6 +582,10 @@ function initializeActionButtons() {
 
     compareButton?.addEventListener("click", () => {
 
+        // HISTORY FIX: single-use token so comparisonTest.html knows this
+        // visit comes from the Compare button and not from browser history.
+        sessionStorage.setItem("pageAccess", "comparison");
+
         window.location.href = "comparisonTest.html";
     });
 }
@@ -579,7 +626,12 @@ function initializeTranslatedLayoutSupport() {
 
 async function initializeResultPage() {
 
-    guardResultPageAccess();
+    // HISTORY FIX: stop immediately when the guard rejects the visit, so no
+    // components load, no backend calls run and no storage is rewritten
+    // while the redirect to initialTest.html is in flight.
+    if (!guardResultPageAccess()) {
+        return;
+    }
 
     await loadComponents();
 
@@ -629,8 +681,6 @@ window.addEventListener("pageshow", (event) => {
 
     if (event.persisted || isBackForward) {
 
-        document.documentElement.style.display = "none";
-
-        window.location.replace("initialTest.html");
+        redirectToInitialTest();
     }
 });

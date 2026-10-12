@@ -744,6 +744,14 @@ if (passwordInput && compareButton) {
                 );
 
 
+                // HISTORY FIX: single-use token so result.html knows this
+                // visit comes from a real comparison submit.
+                sessionStorage.setItem(
+                    "pageAccess",
+                    "result"
+                );
+
+
                 window.location.href =
                     "result.html";
 
@@ -891,6 +899,36 @@ if (compareButton) {
 
 
 // PAGE ACCESS PROTECTION
+// HISTORY FIX: one shared redirect (so the load guard and the pageshow
+// handler never double-fire) and a single-use access token that is always
+// consumed on arrival.
+let redirectingToInitial = false;
+
+
+function consumePageAccess(expectedTarget) {
+
+    const token = sessionStorage.getItem("pageAccess");
+
+    sessionStorage.removeItem("pageAccess");
+
+    return token === expectedTarget;
+}
+
+
+function redirectToInitialTest() {
+
+    if (redirectingToInitial) {
+        return;
+    }
+
+    redirectingToInitial = true;
+
+    document.documentElement.style.display = "none";
+
+    window.location.replace("initialTest.html");
+}
+
+
 (function () {
 
     const navigation =
@@ -911,15 +949,18 @@ if (compareButton) {
             "analyzedPassword"
         );
 
+    // Always consume the token, even when the visit is rejected.
+    const hasAccessToken =
+        consumePageAccess("comparison");
+
     if (
         isReload ||
         isBackForward ||
-        !hasPreviousPassword
+        !hasPreviousPassword ||
+        !hasAccessToken
     ) {
 
-        window.location.replace(
-            "initialTest.html"
-        );
+        redirectToInitialTest();
     }
 
 })();
@@ -932,8 +973,7 @@ window.addEventListener("pageshow", (event) => {
 
     // 2. I-check kung galing sa bfcache (event.persisted) o kaya naman ay back/forward button
     if (event.persisted || isBackForward) {
-        document.documentElement.style.display = "none";
-        window.location.replace("initialTest.html");
+        redirectToInitialTest();
     }
 });
 

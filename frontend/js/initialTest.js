@@ -549,6 +549,17 @@ function clearAnalysisData() {
     localStorage.removeItem("analyzedPassword");
     localStorage.removeItem("comparisonResult");
     localStorage.removeItem("originalAnalysisResult");
+
+    // HISTORY FIX: also clear leftovers from a previous result/comparison session
+    // so a stale "previous password", comparison password, tab or access token
+    // can never leak into a fresh analysis.
+    localStorage.removeItem("comparisonPassword");
+    localStorage.removeItem("previousPassword");
+    localStorage.removeItem("currentPassword");
+    sessionStorage.removeItem("resultSource");
+    sessionStorage.removeItem("openTab");
+    sessionStorage.removeItem("pageAccess");
+    sessionStorage.removeItem("showResultTutorial");
 }
 
 function resetAnalyzeForm() {
@@ -624,6 +635,13 @@ if (passwordInput && scanButton) {
             sessionStorage.setItem(
                 "showResultTutorial",
                 "true"
+            );
+
+            // HISTORY FIX: single-use token that lets result.html know this
+            // visit comes from a real analysis (not from browser history).
+            sessionStorage.setItem(
+                "pageAccess",
+                "result"
             );
 
             window.location.href = "result.html";
