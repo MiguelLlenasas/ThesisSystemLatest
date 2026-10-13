@@ -683,3 +683,294 @@ window.addEventListener("pageshow", (event) => {
         redirectToInitialTest();
     }
 });
+
+
+/* =========================================================
+   LANGUAGE SWITCHER - RESULT PAGE PLACEMENT (RESPONSIVE)
+
+   Wider than 1200px:
+       stays where i18n.js puts it (floating, top-right).
+
+   1200px or narrower (tablets and phones, same breakpoint as
+   the result page CSS):
+       moves into its own row above the page header. It scrolls
+       with the page, so it never covers the logo, the title or
+       the result content.
+
+   700px or narrower (phones):
+       the row becomes a full-width bar for easy tapping.
+
+   Full language names are always shown:
+       "English" / "Filipino (Tagalog)"
+   ========================================================= */
+
+const RESULT_SWITCHER_QUERY = "(max-width: 1200px)";
+
+let resultSwitcher = null;
+let resultSwitcherOriginalParent = null;
+let resultSwitcherOriginalNextSibling = null;
+let resultSwitcherOriginalClasses = null;
+
+let resultLangRow = null;
+let resultSwitcherMediaBound = false;
+
+
+function injectResultSwitcherStyles() {
+
+    if (document.getElementById("resultSwitcherStyles")) {
+        return;
+    }
+
+    const style = document.createElement("style");
+
+    style.id = "resultSwitcherStyles";
+
+    style.textContent = `
+
+        /* ---------- Row that holds the switcher ---------- */
+
+        .result-lang-row {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            min-width: 0;
+            margin: 0 0 14px;
+            box-sizing: border-box;
+        }
+
+        .result-lang-row .i18n-switcher.i18n-in-result {
+            position: static;
+            top: auto;
+            right: auto;
+            z-index: auto;
+            display: inline-flex;
+            align-items: center;
+            width: auto;
+            max-width: 100%;
+            min-width: 0;
+            min-height: 40px;
+            margin: 0;
+            padding: 0 14px;
+            gap: 9px;
+            box-sizing: border-box;
+        }
+
+        .result-lang-row .i18n-in-result select {
+            width: auto;
+            min-width: 0;
+            max-width: 100%;
+            font-size: 13px;
+            padding: 6px 22px 6px 0;
+            text-overflow: ellipsis;
+        }
+
+        /* ---------- Phones: full-width bar ---------- */
+
+        @media (max-width: 700px) {
+
+            .result-lang-row {
+                margin: 0 0 12px;
+            }
+
+            .result-lang-row .i18n-switcher.i18n-in-result {
+                display: flex;
+                width: 100%;
+                min-height: 44px;
+                gap: 10px;
+            }
+
+            .result-lang-row .i18n-in-result select {
+                flex: 1 1 auto;
+                width: 100%;
+                /* 16px stops iPhones from zooming in when tapped */
+                font-size: 16px;
+                padding: 8px 22px 8px 0;
+            }
+        }
+
+        /* ---------- Very small phones ---------- */
+
+        @media (max-width: 400px) {
+
+            .result-lang-row {
+                margin: 0 0 10px;
+            }
+
+            .result-lang-row .i18n-switcher.i18n-in-result {
+                min-height: 42px;
+                padding: 0 12px;
+                gap: 8px;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
+
+/*
+ * Puts the switcher in the right place for the current screen
+ * size. Safe to call again every time the size changes.
+ */
+function layoutResultLanguageSwitcher() {
+
+    const switcher = resultSwitcher;
+
+    if (!switcher) {
+        return;
+    }
+
+    const compact =
+        window.matchMedia(RESULT_SWITCHER_QUERY).matches;
+
+    const container = document.querySelector(".result-container");
+
+    const header = document.querySelector(".page-header");
+
+    if (compact && container && header) {
+
+        /* Tablets / phones: own row above the page header. */
+        if (!resultLangRow) {
+
+            resultLangRow = document.createElement("div");
+            resultLangRow.className = "result-lang-row";
+
+            container.insertBefore(resultLangRow, header);
+
+        }
+
+        switcher.classList.remove("i18n-floating");
+        switcher.classList.add("i18n-in-result");
+
+        if (switcher.parentNode !== resultLangRow) {
+            resultLangRow.appendChild(switcher);
+        }
+
+    } else {
+
+        /* Desktop: put it back exactly where i18n.js placed it. */
+        switcher.classList.remove("i18n-in-result");
+
+        const originalParent =
+            resultSwitcherOriginalParent || document.body;
+
+        if (switcher.parentNode !== originalParent) {
+
+            if (
+                resultSwitcherOriginalNextSibling &&
+                resultSwitcherOriginalNextSibling.parentNode ===
+                    originalParent
+            ) {
+
+                originalParent.insertBefore(
+                    switcher,
+                    resultSwitcherOriginalNextSibling
+                );
+
+            } else {
+
+                originalParent.appendChild(switcher);
+
+            }
+
+        }
+
+        switcher.className =
+            resultSwitcherOriginalClasses || "i18n-switcher i18n-floating";
+
+        if (resultLangRow) {
+
+            resultLangRow.remove();
+
+            resultLangRow = null;
+
+        }
+
+    }
+
+}
+
+
+function bindResultSwitcherMedia() {
+
+    if (resultSwitcherMediaBound) {
+        return;
+    }
+
+    resultSwitcherMediaBound = true;
+
+    const mq = window.matchMedia(RESULT_SWITCHER_QUERY);
+
+    const onChange = () => {
+        layoutResultLanguageSwitcher();
+    };
+
+    if (mq.addEventListener) {
+        mq.addEventListener("change", onChange);
+    } else if (mq.addListener) {
+        mq.addListener(onChange);
+    }
+}
+
+
+/*
+ * i18n.js builds the switcher on its own schedule, so this may
+ * run before the switcher exists. Wait for it if needed.
+ */
+function waitForResultSwitcher(callback) {
+
+    const existing = document.querySelector(".i18n-switcher");
+
+    if (existing) {
+        callback(existing);
+        return;
+    }
+
+    const observer = new MutationObserver(() => {
+
+        const found = document.querySelector(".i18n-switcher");
+
+        if (found) {
+
+            observer.disconnect();
+
+            callback(found);
+
+        }
+
+    });
+
+    observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+    });
+
+    /* Stop watching after 10 seconds so it never runs forever. */
+    window.setTimeout(() => {
+        observer.disconnect();
+    }, 10000);
+}
+
+
+function initializeResultLanguageSwitcher() {
+
+    injectResultSwitcherStyles();
+
+    bindResultSwitcherMedia();
+
+    waitForResultSwitcher(switcher => {
+
+        resultSwitcher = switcher;
+
+        /* Remember where i18n.js placed it. */
+        resultSwitcherOriginalParent = switcher.parentNode;
+        resultSwitcherOriginalNextSibling = switcher.nextSibling;
+        resultSwitcherOriginalClasses = switcher.className;
+
+        layoutResultLanguageSwitcher();
+
+    });
+}
+
+
+initializeResultLanguageSwitcher();

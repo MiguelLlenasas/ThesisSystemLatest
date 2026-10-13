@@ -8,15 +8,7 @@ const FeatureVector = (() => {
 
     function updateFeatureVector(data) {
 
-        console.log(
-            "Updating Feature Vector UI with data:",
-            data
-        );
-
         if (!data) {
-            console.error(
-                "No data provided to Feature Vector"
-            );
             return;
         }
 
@@ -25,9 +17,6 @@ const FeatureVector = (() => {
         const features = data.features || data;
 
         if (!features) {
-            console.error(
-                "No feature vector properties found in data"
-            );
             return;
         }
 

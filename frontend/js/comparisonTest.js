@@ -978,10 +978,6 @@ window.addEventListener("pageshow", (event) => {
 });
 
 
-window.addEventListener(
-    "unload",
-    function () {}
-);
 
 function scrollToInfo(){
     if(window.innerWidth<=1024){
